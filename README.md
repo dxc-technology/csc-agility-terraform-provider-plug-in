@@ -25,16 +25,16 @@ Terraform is built on a plugin-based architecture. All providers and provisioner
 ### Getting Started Instructions
 #### Download and Install
 - Download the .zip, or use your desktop tools to save the project locally
-- place the main.go and the agility directory into ~/work/src/github.com/<Github user>/terraform-provider-agility
+- place the main.go and the agility directory into ~/work/src/github.com/"Github user"/terraform-provider-agility
 	+ ~ is your OS's user directory
-	+ <Github user> is your github username
+	+ "Github user" is your github username
 - go to the newly created ~/work/src/github.com/<Github user>/terraform-provider-agility directory:
 	+ run go get
 		+ this will download all the dependent go libraries Terraform needs to build your plugin
     + run go build  
     	+ this will build the Agility provider plugin executable and place it in the same directory
 
-#### Istall plugin into Terraform
+#### Install plugin into Terraform
 - Expand the services folder in the Box API Hook you imported and find Box_API_Hook VS
 
 #### Activate Anonymous Contract
