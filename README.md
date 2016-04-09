@@ -89,14 +89,19 @@ The agility.tf file is where you configure Terraform to create/update/delete a "
 
 `} `
 
-In the above example, an "agility_compute" terraform resource with the name of 'myserver ' will be created in the "agility" provider. Which means that a topology called myserver with be created in Agility.
+In the above example, an **"agility_compute"** terraform resource with the name of **'myserver'** will be created in the "agility" provider. Which means that a topology called myserver with be created in Agility.
 
-The compute resource will not be created until the "agility_blueprint" resource is created. For this Plugin 'created' means found in Agility. 
-&nbsp;&nbsp;&nbsp;The `name = "Demo Server"` tells the plugin to search agility for a blueprint in the project called 'Demo Server'. *This is Manditory*
+The compute resource will not be created until the "agility_blueprint" resource is created. **For this Plugin 'created' means found in Agility.** 
+
+&nbsp;&nbsp;&nbsp;The `name = "Demo Server"` tells the plugin to search agility for a blueprint in the project called 'Demo Server'. **This is Manditory**
+
 &nbsp;&nbsp;&nbsp;The `version = "1"` tells the plugin to use version 1 of the blueprint. If this paramet is omited the plugin will use the latest version of the blueprint.
-&nbsp;&nbsp;&nbsp;The `type = "XS"` tells the plugin to use the equivalent computer definition for the cloud the blueprint will be deployed into. *This is Manditory*
-&nbsp;&nbsp;&nbsp;The `EnvironmentId = "${agility_environment.Dev.id}"` tells the plugin to use the ID of the Agility Environment defined by the "agility_environment" resource. *This is Manditory*
-&nbsp;&nbsp;&nbsp;The `ProjectId = "${agility_project.Demo.id}"` tells the plugin to use the ID of the Agility Project defined by the "agility_project" resource. *This is Manditory*
+
+&nbsp;&nbsp;&nbsp;The `type = "XS"` tells the plugin to use the equivalent computer definition for the cloud the blueprint will be deployed into. **This is Manditory**
+
+&nbsp;&nbsp;&nbsp;The `EnvironmentId = "${agility_environment.Dev.id}"` tells the plugin to use the ID of the Agility Environment defined by the "agility_environment" resource. **This is Manditory**
+
+&nbsp;&nbsp;&nbsp;The `ProjectId = "${agility_project.Demo.id}"` tells the plugin to use the ID of the Agility Project defined by the "agility_project" resource. **This is Manditory**
 
 Then the /helloworld Operation in the VS was mapped to the GET /users/me operation in the Box API Hook PS.
 
