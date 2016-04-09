@@ -48,11 +48,17 @@ The agility.tf file is where you configure Terraform to create/update/delete a "
 `}`
 
 `# Create a new Linux instance on a small server`
+
 `resource "agility_compute" "myserver" {`
+
 `    depends_on = ["agility_blueprint.myserver"]`
+
 `    name = "myserver"`
+
 `    active = "true"`
+
 `    TopologyId = "${agility_blueprint.myserver.TopologyId}"`
+
 `}`
 
 `resource "agility_blueprint" "myserver" {`
