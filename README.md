@@ -20,7 +20,7 @@ Terraform is built on a plugin-based architecture. All providers and provisioner
     + go to [Go Lang Getting Started](https://golang.org/doc/install) and follow instructions on intalling and configuring GO for your computer
 
 - Install Terraform:
-    + go to [INSTALL TERRAFORM](https://www.terraform.io/intro/getting-started/install.html) and follow instructions on intalling and configuring GO for your computer 
+    + go to [INSTALL TERRAFORM](https://www.terraform.io/intro/getting-started/install.html) and follow instructions on intalling and configuring Terraform for your computer 
  
 ### Getting Started Instructions
 #### Download and Install
