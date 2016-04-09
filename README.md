@@ -51,7 +51,7 @@ The agility.tf file is where you configure Terraform to create/update/delete a "
 
 &nbsp;&nbsp;&nbsp;`    depends_on = ["agility_blueprint.myserver"]`
 
-&nbsp;&nbsp;&nbsp;`    name = "&nbsp;`    
+&nbsp;&nbsp;&nbsp;`    name = "myserver"`    
 
 &nbsp;&nbsp;&nbsp;`	   TopologyId = "${agility_blueprint.myserver.TopologyId}"`
 
@@ -89,9 +89,9 @@ The agility.tf file is where you configure Terraform to create/update/delete a "
 
 `} `
 
-In the above example, an **"agility_compute"** terraform resource with the name of **'myserver'** will be created in the "agility" provider. Which means that a topology called myserver with be created in Agility.
+In the above example, an **"agility_compute"** terraform resource with the name of **'myserver'** will be created in the **"agility" provider**. Which means that a topology called myserver with be created in Agility.
 
-The compute resource will not be created until the "agility_blueprint" resource is created. **For this Plugin 'created' means found in Agility.** 
+**The compute resource will not be created until the "agility_blueprint" resource is created. For this Plugin 'created' means found in Agility.** 
 
 &nbsp;&nbsp;&nbsp;The `name = "Demo Server"` tells the plugin to search agility for a blueprint in the project called 'Demo Server'. **This is Manditory**
 
@@ -103,22 +103,39 @@ The compute resource will not be created until the "agility_blueprint" resource 
 
 &nbsp;&nbsp;&nbsp;The `ProjectId = "${agility_project.Demo.id}"` tells the plugin to use the ID of the Agility Project defined by the "agility_project" resource. **This is Manditory**
 
-Then the /helloworld Operation in the VS was mapped to the GET /users/me operation in the Box API Hook PS.
+**The "agility_blueprint" resource will not be created until the "agility_environment" resource is created. For this Plugin 'created' means found in Agility.** 
 
-Go to the Box_API_Hook_Helloworld VS -> Operations Tab -> GET /hellowworld operation -> Process tab you'll see this image:
-![Helloworld process] 
-(https://github.com/pogo61/Box-API-Hook/blob/master/Box%20API%20Hook.png)
+This code:
 
-Double click on the Process activity to see that it call's the Heloworld Process, which call's an invoke on the GET /users/me operation to make the Hello World operation call successful.
+`resource "agility_environment" "Dev" {`
+
+&nbsp;&nbsp;&nbsp;`  	depends_on = ["agility_project.Demo"]`
+
+&nbsp;&nbsp;&nbsp;`  	name = "Dev"`
+
+&nbsp;&nbsp;&nbsp;`  	ProjectId = "${agility_project.Demo.id}"`
+
+`}`
+
+just tells the plugin that an Agility Environment call 'Dev' has to exist in the Agility Project.
 
 
-### Create Your Own Integration with the Google Sheets API
-The Hello World operation is one simple way of integrating or extending your API's.
-Take a look at the [Box API Integration](https://github.com/pogo61/Box-API-Integration).
-this will give you a deeper inderstanding of the richness of our gateway product in integrating to API's
+**The "agility_environment" resource will not be created until the "agility_project" resource is created. For this Plugin 'created' means found in Agility.** 
 
-### Modify and Build
-In the event you need to change the API Hook.   Here are the instructions to do so. 
+This code:
+
+`resource "agility_project" "Demo" {`
+
+&nbsp;&nbsp;&nbsp;`	name = "Demo"`
+
+`} `
+
+just tells the plugin that an Agility Project call 'Demo' has to exist in the Agility Project
+
+
+*Putting this all together, A small VM call myserver will be created in the Dev Environment, of the Demo Project in Agility, based on the 'Demo Server' blueprint*
+
+
 
 ### License
 Put a link to an open source license
