@@ -51,7 +51,9 @@ The agility.tf file is where you configure Terraform to create/update/delete a "
 
 &nbsp;&nbsp;&nbsp;`    depends_on = ["agility_blueprint.myserver"]`
 
-&nbsp;&nbsp;&nbsp;`    name = "myserver"`    
+&nbsp;&nbsp;&nbsp;`    name = "myserver"` 
+
+&nbsp;&nbsp;&nbsp;`    active = "true"`   
 
 &nbsp;&nbsp;&nbsp;`	   TopologyId = "${agility_blueprint.myserver.TopologyId}"`
 
@@ -91,7 +93,13 @@ The agility.tf file is where you configure Terraform to create/update/delete a "
 
 In the above example, an **"agility_compute"** terraform resource with the name of **'myserver'** will be created in the **"agility" provider**. Which means that a topology called myserver with be created in Agility.
 
+*Changing the name parameter of the agility_compute resource will make the plugin change the name of the VM and Topology in Agility, without affecting the VM* **This is Manditory**
+
+*Changing the active parameter of the agility_compute resource will make the plugin either stop or Start the VM. 'true' means start, 'false' means stop* **This is Manditory**
+
 **The compute resource will not be created until the "agility_blueprint" resource is created. For this Plugin 'created' means found in Agility.** 
+
+&nbsp;&nbsp;&nbsp;The `name = "Demo Server"` tells the plugin to search agility for a blueprint in the project called 'Demo Server'. **This is Manditory**
 
 &nbsp;&nbsp;&nbsp;The `name = "Demo Server"` tells the plugin to search agility for a blueprint in the project called 'Demo Server'. **This is Manditory**
 
@@ -133,7 +141,7 @@ This code:
 just tells the plugin that an Agility Project call 'Demo' has to exist in the Agility Project
 
 
-*Putting this all together, A small VM call myserver will be created in the Dev Environment, of the Demo Project in Agility, based on the 'Demo Server' blueprint*
+***Putting this all together, A small VM call myserver will be created in the Dev Environment, of the Demo Project in Agility, based on the 'Demo Server' blueprint***
 
 
 
