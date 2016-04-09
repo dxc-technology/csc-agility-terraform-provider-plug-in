@@ -43,21 +43,19 @@ Terraform is built on a plugin-based architecture. All providers and provisioner
 #### The agility.tf file
 The agility.tf file is where you configure Terraform to create/update/delete a "Topology" based on a Blueprint and Policies in the Agility Platform
 
-`provider "agility" {`
-
-`}`
+`provider "agility" {}`
 
 `# Create a new Linux instance on a small server`
 
 `resource "agility_compute" "myserver" {`
 
-`    depends_on = ["agility_blueprint.myserver"]`
+&nbsp;`    depends_on = ["agility_blueprint.myserver"]`
 
-`    name = "myserver"`
+&nbsp;`    name = "myserver"`
 
-`    active = "true"`
+&nbsp;`    active = "true"`
 
-`    TopologyId = "${agility_blueprint.myserver.TopologyId}"`
+&nbsp;`    TopologyId = "${agility_blueprint.myserver.TopologyId}"`
 
 `}`
 
