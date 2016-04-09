@@ -1,0 +1,6 @@
+{
+    "AccessKey": "user2",
+    "SecretKey": "Welcome123",
+    "MaxRetries": 2,
+    "APIURL": "https://54.75.248.162:8443/agility/api/v3.2/"
+}
