@@ -43,38 +43,36 @@ Terraform is built on a plugin-based architecture. All providers and provisioner
 #### The agility.tf file
 The agility.tf file is where you configure Terraform to create/update/delete a "Topology" based on a Blueprint and Policies in the Agility Platform
 
-provider "agility" {
+`provider "agility" {`
 
-}
+`}`
 
-# Create a new Linux instance on a small server
-resource "agility_compute" "myserver" {
-    depends_on = ["agility_blueprint.myserver"]
-    name = "myserver"
-    active = "true"
-    TopologyId = "${agility_blueprint.myserver.TopologyId}"
-}
+`# Create a new Linux instance on a small server`
+`resource "agility_compute" "myserver" {`
+`    depends_on = ["agility_blueprint.myserver"]`
+`    name = "myserver"`
+`    active = "true"`
+`    TopologyId = "${agility_blueprint.myserver.TopologyId}"`
+`}`
 
-resource "agility_blueprint" "myserver" {
-    depends_on = ["agility_environment.Dev"]
-    name = "Demo Server"
-    version = "1"
-    type = "XS"
-    EnvironmentId = "${agility_environment.Dev.id}"
-    ProjectId = "${agility_project.Demo.id}"
-}
+`resource "agility_blueprint" "myserver" {`
+`    depends_on = ["agility_environment.Dev"]`
+`    name = "Demo Server"`
+`    version = "1"`
+`    type = "XS"`
+`    EnvironmentId = "${agility_environment.Dev.id}"`
+`    ProjectId = "${agility_project.Demo.id}"`
+`}`
 
-resource "agility_environment" "Dev" {
-  	depends_on = ["agility_project.Demo"]
-  	name = "Dev"
-  	ProjectId = "${agility_project.Demo.id}"
+`resource "agility_environment" "Dev" {`
+`  	depends_on = ["agility_project.Demo"]`
+`  	name = "Dev"`
+`  	ProjectId = "${agility_project.Demo.id}"`
+`}`
 
-}
-
-resource "agility_project" "Demo" {
-	name = "Demo"
-
-} 
+`resource "agility_project" "Demo" {`
+`	name = "Demo"`
+`} `
 
 Then a VS was created by using the RAML as the definition source.
 The root contect of the VS was made exactly the same as the root context of the Box API Hook VS. the consequense of this is that this simple HelloWorld VS and the Hook VS become a single VS.
