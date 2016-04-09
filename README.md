@@ -49,33 +49,44 @@ The agility.tf file is where you configure Terraform to create/update/delete a "
 
 `resource "agility_compute" "myserver" {`
 
-&nbsp;`    depends_on = ["agility_blueprint.myserver"]`
+&nbsp;&nbsp;&nbsp;`    depends_on = ["agility_blueprint.myserver"]`
 
-&nbsp;`    name = "myserver"`
+&nbsp;&nbsp;&nbsp;`    name = "&nbsp;`    
 
-&nbsp;`    active = "true"`
-
-&nbsp;`    TopologyId = "${agility_blueprint.myserver.TopologyId}"`
+&nbsp;&nbsp;&nbsp;'	   TopologyId = "${agility_blueprint.myserver.TopologyId}"`
 
 `}`
 
 `resource "agility_blueprint" "myserver" {`
-`    depends_on = ["agility_environment.Dev"]`
-`    name = "Demo Server"`
-`    version = "1"`
-`    type = "XS"`
-`    EnvironmentId = "${agility_environment.Dev.id}"`
-`    ProjectId = "${agility_project.Demo.id}"`
+
+&nbsp;&nbsp;&nbsp;`    depends_on = ["agility_environment.Dev"]`
+
+&nbsp;&nbsp;&nbsp;`    name = "Demo Server"`
+
+&nbsp;&nbsp;&nbsp;`    version = "1"`
+
+&nbsp;&nbsp;&nbsp;`    type = "XS"`
+
+&nbsp;&nbsp;&nbsp;`    EnvironmentId = "${agility_environment.Dev.id}"`
+
+&nbsp;&nbsp;&nbsp;`    ProjectId = "${agility_project.Demo.id}"`
+
 `}`
 
 `resource "agility_environment" "Dev" {`
-`  	depends_on = ["agility_project.Demo"]`
-`  	name = "Dev"`
-`  	ProjectId = "${agility_project.Demo.id}"`
+
+&nbsp;&nbsp;&nbsp;`  	depends_on = ["agility_project.Demo"]`
+
+&nbsp;&nbsp;&nbsp;`  	name = "Dev"`
+
+&nbsp;&nbsp;&nbsp;`  	ProjectId = "${agility_project.Demo.id}"`
+
 `}`
 
 `resource "agility_project" "Demo" {`
-`	name = "Demo"`
+
+&nbsp;&nbsp;&nbsp;`	name = "Demo"`
+
 `} `
 
 Then a VS was created by using the RAML as the definition source.
