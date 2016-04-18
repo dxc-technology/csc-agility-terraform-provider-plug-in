@@ -7,7 +7,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"os"
-	"encoding/json"
+	//"encoding/json"
 
 	"github.com/pogo61/terraform-provider-agility/agility/api"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -149,7 +149,7 @@ type Status struct {
 	Value 	[]byte `xml:",chardata"`
 }
 
-func resourceAgilityBlueprint() *schema.Resource {
+/*func resourceAgilityBlueprint() *schema.Resource {
 	// Our schema is shared also with aws_ami_copy and aws_ami_from_instance
 	//resourceSchema := resourceAwsAmiCommonSchema(false)
 
@@ -196,7 +196,7 @@ func resourceAgilityBlueprint() *schema.Resource {
 			},
 		},
 	}
-}
+}*/
 
 type Config struct {
     AccessKey  	string
@@ -221,7 +221,8 @@ type Config struct {
 
 var configuration Config
 
-func init(){
+//Deleted as no longer used as a Terraform Resource
+/*func init(){
     //get the confing file and load the config variables
     file, err1 := os.Open("conf.json")
     if err1 != nil {
@@ -417,66 +418,239 @@ func resourceAgilityBlueprintDeploy(d *schema.ResourceData, meta interface{}) er
 	}
 	
 	return nil
-}
+}*/
 
-func resourceAgilityBlueprintRead(d *schema.ResourceData, meta interface{}) error {
-	// there is no analogy to reding the blueprint so just return Nill
-
-	return nil
-}
-
-func resourceAgilityBlueprintDelete(d *schema.ResourceData, meta interface{}) error {
-	//Set up logging
-    f, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
-    if errf != nil {
-        log.Println("error opening file: ", errf)
-    }
-    defer f.Close()
-
-    log.SetOutput(f)
-	// call the API to delete the topology identified by the ID if this resource.
-	// this will take a while, so call the GeTaksStatus function to loop and wait until it completes
-    log.Println("Starting the Topology Destroy")
-    log.Println("TopologyId is: ", d.Id())
-	response := api.DestroyTopology(d.Id())
-
-	r := strings.NewReader(string(response))
-	decoder := xml.NewDecoder(r)
-	finish := false
-	for {
-		// Read tokens from the XML document in a stream.
-		t, _ := decoder.Token()
-		if t == nil {
-			break
-		}
-		if finish {
-            break
-        }
-		// parse the result and loop for and of created task
-		switch Element := t.(type) {
-		case xml.StartElement:
-			if Element.Name.Local == "Task" {
-				log.Println("Element name is : ", Element.Name.Local)
-
-				var q DeployTask
-				err := decoder.DecodeElement(&q, &Element)
+func deployBlueprint(d *schema.ResourceData) error {
+	// get the value of the Project ID created by the creation of the Project Resource.
+	// if that is OK as well as the Name, the get the right bluerint ID, depending on whether 
+	// a Version number was supplied of not
+	projectId, ok_projectId := d.GetOk("ProjectId")
+	log.Println("Project ID is : ", projectId)
+	var blueprintId string
+	if ok_projectId {
+		blueprintName, ok_blueprintName := d.GetOk("blueprint")
+		log.Println("Blueprint name is : ", blueprintName.(string))
+		if ok_blueprintName {
+			version, ok_version := d.GetOk("version")
+			if ok_version {
+				response, err := api.GetBlueprintIdForVersion(blueprintName.(string), projectId.(string), version.(string))
 				if err != nil {
-					log.Println(err)
+					return err
 				}
-
-				log.Println("status value is :", q.Status)
-				if q.Status == "Pending" {
-					GetTaskStatus(d,q.Id)
-					d.SetId("")
-					finish = true
+				blueprintId = response
+			} else {
+				response, err := api.GetBlueprintId(blueprintName.(string), projectId.(string))
+				if err != nil {
+					return err
 				}
+				blueprintId = response
 			}
-		default:
+
+			log.Println("BlueprintId is : ", blueprintId)
+			if blueprintId != "" {
+				d.Set("BlueprintId",blueprintId)
+				//d.SetId(blueprintId)
+			} else {
+				return fmt.Errorf("The blueprint does not have that version")
+			}
+			
+		} else {
+			log.Println("No blueprintName was provided")
+			return fmt.Errorf("No blueprintName was provided")
 		}
+	} else {
+		log.Println("No ProjectId was provided")
+		return fmt.Errorf("No ProjectId was provided")
 	}
 
+	environmentId, ok_environmentId := d.GetOk("EnvironmentId")
+
+	//if the environment ID was provided then get the right deployment plan for the blueprint ID
+	// then deploy the blueprint.
+	// this will take some time so call GetTaskStatus for it to check when this is done
+	if ok_environmentId {
+		blueprintId, ok_blueprintId := d.GetOk("BlueprintId")
+		log.Println("BlueprintId is : ", blueprintId.(string))
+		if ok_blueprintId {
+			log.Println("BlueprintId is : ", blueprintId.(string))
+			compType, ok_type:= d.GetOk("type")
+			if ok_type {
+				log.Println("type is : ", compType.(string))
+				var deploymentPlan = "No Plan"
+				var err error
+				// based on the blueprint, the environment, and the size (if supplied), ge the right 
+				// deployment plan
+				deploymentPlan, err = GetDeploymentPlan(d, blueprintId.(string), environmentId.(string))
+				if err != nil {
+					return err
+				}
+				f1, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+			    if errf != nil {
+			        log.Println("error opening file: ", errf)
+			    }
+			    defer f1.Close()
+
+			    log.SetOutput(f1)
+
+				log.Println("Determined the Deployment Plan ")
+				log.Println("deploymentPlan is : ", deploymentPlan)
+				// when the deployment plan is supplied then start the bluerint using that plan
+				if deploymentPlan != "No Plan" {
+					deployResponse := api.DeploymentPlanBlueprintDeploy(blueprintId.(string), environmentId.(string), deploymentPlan)
+					r := strings.NewReader(string(deployResponse))
+					log.Println("Deploy response is : ", r)
+					decoder := xml.NewDecoder(r)
+					finish := false
+					for {
+						if finish {
+	            			break
+	        			}
+						// Read tokens from the XML document in a stream.
+						t, _ := decoder.Token()
+						if t == nil {
+							break
+						}
+						
+						// Inspect the type of the token just read.
+						switch Element := t.(type) {
+							case xml.StartElement:
+								if Element.Name.Local == "Task" {
+									log.Println("Element name is : ", Element.Name.Local)
+
+									var q DeployTask
+									err := decoder.DecodeElement(&q, &Element)
+									if err != nil {
+										log.Println(err)
+									}
+
+									log.Println("status value is :", q.Status)
+									if q.Status == "Pending" {
+										GetTaskStatus(d,q.Id)
+										//topologyId := d.Get("TopologyId").(string)
+										//d.SetId(topologyId)
+										finish = true
+									}
+								}
+							default:
+						}
+					} 
+				} else {
+					return errors.New("There is no Deployment Plan for the Blueprint in that environment")
+				}
+			} else {
+				// if the type (size of machine) is not supplied then just deploy th eblueprint using the default deployment plan
+				// that Agility creates
+				log.Println("BlueprintId is : ", blueprintId.(string))
+				deployResponse := api.SimpleBlueprintDeploy(blueprintId.(string), environmentId.(string))
+				r := strings.NewReader(string(deployResponse))
+				log.Println("Deploy response is : ", r)
+				decoder := xml.NewDecoder(r)
+				finish := false
+				for {
+					if finish {
+            			break
+        			}
+					// Read tokens from the XML document in a stream.
+					t, _ := decoder.Token()
+					if t == nil {
+						break
+					}
+					
+					// Inspect the type of the token just read.
+					switch Element := t.(type) {
+						case xml.StartElement:
+							if Element.Name.Local == "Task" {
+								log.Println("Element name is : ", Element.Name.Local)
+
+								var q DeployTask
+								err := decoder.DecodeElement(&q, &Element)
+								if err != nil {
+									log.Println(err)
+								}
+
+								log.Println("status value is :", q.Status)
+								if q.Status == "Pending" {
+									GetTaskStatus(d,q.Id)
+									//topologyId := d.Get("TopologyId").(string)
+									//d.SetId(topologyId)
+									finish = true
+								}
+							}
+						default:
+					}
+				}	
+			}
+		} else {
+			log.Println("No blueprintId was provided")
+			return errors.New("No blueprintId was provided")
+		}
+	} else {
+		log.Println("No EnvironmentId was provided")
+		return errors.New("No EnvironmentId was provided")
+	}
+	
 	return nil
 }
+
+//Deleted as no longer used as a Terraform Resource
+// func resourceAgilityBlueprintRead(d *schema.ResourceData, meta interface{}) error {
+// 	// there is no analogy to reding the blueprint so just return Nill
+
+// 	return nil
+// }
+
+// func resourceAgilityBlueprintDelete(d *schema.ResourceData, meta interface{}) error {
+// 	//Set up logging
+//     f, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+//     if errf != nil {
+//         log.Println("error opening file: ", errf)
+//     }
+//     defer f.Close()
+
+//     log.SetOutput(f)
+// 	// call the API to delete the topology identified by the ID if this resource.
+// 	// this will take a while, so call the GeTaksStatus function to loop and wait until it completes
+//     log.Println("Starting the Topology Destroy")
+//     log.Println("TopologyId is: ", d.Id())
+// 	response := api.DestroyTopology(d.Id())
+
+// 	r := strings.NewReader(string(response))
+// 	decoder := xml.NewDecoder(r)
+// 	finish := false
+// 	for {
+// 		// Read tokens from the XML document in a stream.
+// 		t, _ := decoder.Token()
+// 		if t == nil {
+// 			break
+// 		}
+// 		if finish {
+//             break
+//         }
+// 		// parse the result and loop for and of created task
+// 		switch Element := t.(type) {
+// 		case xml.StartElement:
+// 			if Element.Name.Local == "Task" {
+// 				log.Println("Element name is : ", Element.Name.Local)
+
+// 				var q DeployTask
+// 				err := decoder.DecodeElement(&q, &Element)
+// 				if err != nil {
+// 					log.Println(err)
+// 				}
+
+// 				log.Println("status value is :", q.Status)
+// 				if q.Status == "Pending" {
+// 					GetTaskStatus(d,q.Id)
+// 					d.SetId("")
+// 					finish = true
+// 				}
+// 			}
+// 		default:
+// 		}
+// 	}
+
+// 	return nil
+// }
 
 func GetDeploymentPlan(d *schema.ResourceData, blueprintId string, environmentId string) (result string, err error) {
 	var finished bool = false
@@ -497,7 +671,7 @@ func GetDeploymentPlan(d *schema.ResourceData, blueprintId string, environmentId
 		}
 		statusResponse := api.GetDeploymentPlans(blueprintId , environmentId)
 
-		log.Println("\n response is:",string(statusResponse))
+		log.Println("\n GetDeploymentPlans response is:",string(statusResponse))
 		sr := strings.NewReader(string(statusResponse))
 		decoder := xml.NewDecoder(sr)
 		for {

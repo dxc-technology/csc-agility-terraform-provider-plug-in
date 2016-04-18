@@ -9,7 +9,8 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-func resourceAgilityEnvironment() *schema.Resource {
+//Deleted as no longer used as a Terraform Resource
+/*func resourceAgilityEnvironment() *schema.Resource {
 
 	return &schema.Resource{
 		Create: resourceAgilityEnvironmentCreate,
@@ -30,9 +31,43 @@ func resourceAgilityEnvironment() *schema.Resource {
 			},
 		},
 	}
-}
+}*/
 
-func resourceAgilityEnvironmentCreate(d *schema.ResourceData, meta interface{}) error {
+// func resourceAgilityEnvironmentCreate(d *schema.ResourceData, meta interface{}) error {
+// 	// set up logging
+// 	f, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+//     if errf != nil {
+//         log.Println("error opening file: ", errf)
+//     }
+//     defer f.Close()
+
+//     log.SetOutput(f)
+
+// 	// Associate to Project if specified, which it should be
+// 	// if the .tf file is configured correctly
+// 	projectId, ok_projectId := d.GetOk("ProjectId")
+// 	log.Println("the Project Id is: ", projectId)
+
+// 	if ok_projectId {
+// 		//get the ID of the Environment by calling the Agility API
+// 		response, err := api.GetEnvironmentId(d.Get("name").(string), projectId.(string))
+// 		if err != nil {
+// 			return err
+// 		}
+
+// 		log.Println("the Environment Id is: ", response)
+// 		//set the ID as the ID of this resource
+// 		d.SetId(string(response))
+
+// 		return nil
+// 	} else {
+// 		return fmt.Errorf("No ProjectId was provided")
+// 	}
+
+// 	return nil
+// }
+
+func checkEnvironment(d *schema.ResourceData) error {
 	// set up logging
 	f, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
     if errf != nil {
@@ -49,14 +84,14 @@ func resourceAgilityEnvironmentCreate(d *schema.ResourceData, meta interface{}) 
 
 	if ok_projectId {
 		//get the ID of the Environment by calling the Agility API
-		response, err := api.GetEnvironmentId(d.Get("name").(string), projectId.(string))
+		response, err := api.GetEnvironmentId(d.Get("environment").(string), projectId.(string))
 		if err != nil {
 			return err
 		}
 
 		log.Println("the Environment Id is: ", response)
 		//set the ID as the ID of this resource
-		d.SetId(string(response))
+		d.Set("EnvironmentId",string(response))
 
 		return nil
 	} else {
@@ -66,56 +101,57 @@ func resourceAgilityEnvironmentCreate(d *schema.ResourceData, meta interface{}) 
 	return nil
 }
 
-func resourceAgilityEnvironmentRead(d *schema.ResourceData, meta interface{}) error {
-	// Associate to Project if specified, which it should be
-	// if the .tf file is configured correctly
-	projectId, ok_projectId := d.GetOk("ProjectId")
+//Deleted as no longer used as a Terraform Resource
+// func resourceAgilityEnvironmentRead(d *schema.ResourceData, meta interface{}) error {
+// 	// Associate to Project if specified, which it should be
+// 	// if the .tf file is configured correctly
+// 	projectId, ok_projectId := d.GetOk("ProjectId")
 
-	if ok_projectId {
-		//get the ID of the Environment by calling the Agility API
-		response, err := api.GetEnvironmentId(d.Get("name").(string), projectId.(string))
-		if err != nil {
-			return err
-		}
+// 	if ok_projectId {
+// 		//get the ID of the Environment by calling the Agility API
+// 		response, err := api.GetEnvironmentId(d.Get("environment").(string), projectId.(string))
+// 		if err != nil {
+// 			return err
+// 		}
 
-		//set the ID as the ID of this resource
-		d.SetId(string(response))
+// 		//set the ID as the ID of this resource
+// 		d.SetId(string(response))
 
-		return nil
-	} else {
-		return fmt.Errorf("No ProjectId was provided")
-	}
+// 		return nil
+// 	} else {
+// 		return fmt.Errorf("No ProjectId was provided")
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func resourceAgilityEnvironmentUpdate(d *schema.ResourceData, meta interface{}) error {
-	// Associate to Project if specified, which it should be
-	// if the .tf file is configured correctly
-	projectId, ok_projectId := d.GetOk("ProjectId")
+// func resourceAgilityEnvironmentUpdate(d *schema.ResourceData, meta interface{}) error {
+// 	// Associate to Project if specified, which it should be
+// 	// if the .tf file is configured correctly
+// 	projectId, ok_projectId := d.GetOk("ProjectId")
 
-	if ok_projectId {
-		//get the ID of the Environment by calling the Agility API
-		response, err := api.GetEnvironmentId(d.Get("name").(string), projectId.(string))
-		if err != nil {
-			return err
-		}
+// 	if ok_projectId {
+// 		//get the ID of the Environment by calling the Agility API
+// 		response, err := api.GetEnvironmentId(d.Get("environment").(string), projectId.(string))
+// 		if err != nil {
+// 			return err
+// 		}
 
-		//set the ID as the ID of this resource
-		d.SetId(string(response))
+// 		//set the ID as the ID of this resource
+// 		d.SetId(string(response))
 
-		return nil
-	} else {
-		return fmt.Errorf("No ProjectId was provided")
-	}
+// 		return nil
+// 	} else {
+// 		return fmt.Errorf("No ProjectId was provided")
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func resourceAgilityEnvironmentDelete(d *schema.ResourceData, meta interface{}) error {
-	// we don't delete the environment in agility, so just remove the resource from Terraform
-	// by removing the ID
-	d.SetId("")
+// func resourceAgilityEnvironmentDelete(d *schema.ResourceData, meta interface{}) error {
+// 	// we don't delete the environment in agility, so just remove the resource from Terraform
+// 	// by removing the ID
+// 	d.SetId("")
 
-	return nil
-}
+// 	return nil
+// }

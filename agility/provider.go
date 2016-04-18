@@ -16,9 +16,6 @@ func Provider() terraform.ResourceProvider {
 		//define the supported resources and point to their respective .go classes
 		ResourcesMap: map[string]*schema.Resource{
 			"agility_compute":			resourceAgilityCompute(),
-			"agility_blueprint":		resourceAgilityBlueprint(),
-			"agility_project":          resourceAgilityProject(),
-			"agility_environment":      resourceAgilityEnvironment(),
 		},
 	}
 }

@@ -566,9 +566,49 @@ func resourceAgilityCompute() *schema.Resource {
 				Required: 	true,
 				Computed: 	false,
 			},
-			"TopologyId": &schema.Schema{
+			"version": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional:	true,
+				ForceNew:	true,
+			},
+			"type": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional:	true,
+				ForceNew:	true,
+			},
+			"project": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: 	true,
+				ForceNew:	true,
+			},
+			"environment": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: 	true,
+				ForceNew:	true,
+			},
+			"blueprint": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: 	true,
+				ForceNew:	true,
+			},
+			"EnvironmentId": &schema.Schema{
+				Type:     	schema.TypeString,
+				Computed: 	true,
+				ForceNew:	true,
+			},
+			"ProjectId": &schema.Schema{
+				Type:     	schema.TypeString,
+				Computed: 	true,
+				ForceNew:	true,
+			},
+			"BlueprintId": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: 	true,
+				ForceNew:	true,
+			},
+			"TopologyId": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: 	true,
 				ForceNew:	true,
 			},
 			"CreatedStopped": &schema.Schema{
@@ -596,7 +636,7 @@ func init(){
     log.Printf("err2: %v\n", err2)
 }
 
-func resourceAgilityComputeCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceAgilityComputeCreate(ResourceData *schema.ResourceData, meta interface{}) error {
 	//set up logging
 	f, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
     if errf != nil {
@@ -606,21 +646,42 @@ func resourceAgilityComputeCreate(d *schema.ResourceData, meta interface{}) erro
 
     log.SetOutput(f)
 
-    //if the active resource variable is set in the .tf file then rename the topology and
-    // start it. Otherwise just rename the tolpology. If this topology is created but not started also 
-    // set the CreatedStopped resource variable for correct update processing
-	if d.Get("active").(string) == "true" {
-		topologyId := d.Get("TopologyId").(string)
-		UpdateTopologyName(d,topologyId)
-		StartTopology(d,topologyId)
-		d.SetId(topologyId)
-		UpdateInstanceName(d,topologyId)
-	} else {
-		topologyId := d.Get("TopologyId").(string)
-		UpdateTopologyName(d,topologyId)
-		d.Set("CreatedStopped", true)
-		d.SetId(topologyId)
-	}
+
+    errProj := checkProject(ResourceData)
+    log.Println("errProj is: ", errProj)
+    if errProj == nil {
+    	log.Println("ProjectId is: ", ResourceData.Get("ProjectId"))
+    	errEnv := checkEnvironment(ResourceData)
+    	if errEnv == nil {
+    		log.Println("EnvironmentId is: ", ResourceData.Get("EnvironmentId"))
+	    	errBP := deployBlueprint(ResourceData)
+	    	log.Println("BlueprintId is: ", ResourceData.Get("BlueprintId"))
+	    	if errBP == nil {
+	    		//if the active resource variable is set in the .tf file then rename the topology and
+			    // start it. Otherwise just rename the tolpology. If this topology is created but not started also 
+			    // set the CreatedStopped resource variable for correct update processing
+				if ResourceData.Get("active").(string) == "true" {
+					topologyId := ResourceData.Get("TopologyId").(string)
+					UpdateTopologyName(ResourceData,topologyId)
+					StartTopology(ResourceData,topologyId)
+					ResourceData.SetId(topologyId)
+					UpdateInstanceName(ResourceData,topologyId)
+				} else {
+					topologyId := ResourceData.Get("TopologyId").(string)
+					UpdateTopologyName(ResourceData,topologyId)
+					ResourceData.Set("CreatedStopped", true)
+					ResourceData.SetId(topologyId)
+				}
+	    	} else {
+	    		return errBP
+	    	}	
+    	} else {
+    		return errEnv
+    	}
+    } else {
+    	log.Println("ERROR! errProj is: ", errProj)
+    	return errProj
+    }
 
 	return nil
 }
@@ -677,8 +738,54 @@ func resourceAgilityComputeUpdate(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceAgilityComputeDelete(d *schema.ResourceData, meta interface{}) error {
-	// just remove the Id for the resource, as deleting the blueprint will remove the topology
-	d.SetId("")
+	//Set up logging
+    // f, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+    // if errf != nil {
+    //     log.Println("error opening file: ", errf)
+    // }
+    // defer f.Close()
+
+    // log.SetOutput(f)
+	// call the API to delete the topology identified by the ID if this resource.
+	// this will take a while, so call the GeTaksStatus function to loop and wait until it completes
+    log.Println("Starting the Topology Destroy")
+    log.Println("TopologyId is: ", d.Id())
+	response := api.DestroyTopology(d.Id())
+
+	r := strings.NewReader(string(response))
+	decoder := xml.NewDecoder(r)
+	finish := false
+	for {
+		// Read tokens from the XML document in a stream.
+		t, _ := decoder.Token()
+		if t == nil {
+			break
+		}
+		if finish {
+            break
+        }
+		// parse the result and loop for and of created task
+		switch Element := t.(type) {
+		case xml.StartElement:
+			if Element.Name.Local == "Task" {
+				log.Println("Element name is : ", Element.Name.Local)
+
+				var q DeployTask
+				err := decoder.DecodeElement(&q, &Element)
+				if err != nil {
+					log.Println(err)
+				}
+
+				log.Println("status value is :", q.Status)
+				if q.Status == "Pending" {
+					GetTaskStatus(d,q.Id)
+					d.SetId("")
+					finish = true
+				}
+			}
+		default:
+		}
+	}
 
 	return nil
 }
