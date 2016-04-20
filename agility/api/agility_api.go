@@ -76,7 +76,7 @@ func init(){
 
 }
 
-func SimpleBlueprintDeploy(blueprintId string, environmentId string) []byte {
+func SimpleBlueprintDeploy(blueprintId string, environmentId string, username string, password string) []byte {
     //set up logging
     f, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
     if errf != nil {
@@ -98,7 +98,7 @@ func SimpleBlueprintDeploy(blueprintId string, environmentId string) []byte {
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("POST", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username,password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -122,7 +122,7 @@ func SimpleBlueprintDeploy(blueprintId string, environmentId string) []byte {
     return body
 }
 
-func DeploymentPlanBlueprintDeploy(blueprintId string, environmentId string, deploymentPlan string) []byte {
+func DeploymentPlanBlueprintDeploy(blueprintId string, environmentId string, deploymentPlan string, username string, password string) []byte {
     var url bytes.Buffer
     // Create the URL for the call to the Agility API
     url.WriteString(configuration.APIURL)
@@ -135,7 +135,7 @@ func DeploymentPlanBlueprintDeploy(blueprintId string, environmentId string, dep
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("POST", url.String(), bytes.NewBuffer([]byte(deploymentPlan)))
     req.Header.Set("Content-Type", "application/xml; charset=utf-8")
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username,password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -159,7 +159,7 @@ func DeploymentPlanBlueprintDeploy(blueprintId string, environmentId string, dep
     return body
 }
 
-func GetBlueprintDetail(blueprintId string) []byte {
+func GetBlueprintDetail(blueprintId string, username string, password string) []byte {
     var url bytes.Buffer
     // Create the URL for the call to the Agility API
     url.WriteString(configuration.APIURL)
@@ -169,7 +169,7 @@ func GetBlueprintDetail(blueprintId string) []byte {
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("GET", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username,password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -193,7 +193,7 @@ func GetBlueprintDetail(blueprintId string) []byte {
     return body
 }
 
-func StartTopology(topologyId string) []byte {
+func StartTopology(topologyId string, username string, password string) []byte {
     var url bytes.Buffer
     // Create the URL for the call to the Agility API
     url.WriteString(configuration.APIURL)
@@ -204,7 +204,7 @@ func StartTopology(topologyId string) []byte {
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("POST", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username,password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -228,7 +228,7 @@ func StartTopology(topologyId string) []byte {
     return body
 }
 
-func StopTopology(topologyId string) []byte {
+func StopTopology(topologyId string, username string, password string) []byte {
     var url bytes.Buffer
     // Create the URL for the call to the Agility API
     url.WriteString(configuration.APIURL)
@@ -239,7 +239,7 @@ func StopTopology(topologyId string) []byte {
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("POST", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username,password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -263,7 +263,7 @@ func StopTopology(topologyId string) []byte {
     return body
 }
 
-func DestroyTopology(topologyId string) []byte {
+func DestroyTopology(topologyId string, username string, password string) []byte {
     log.Println("topologyId is:", topologyId)
     var url bytes.Buffer
     // Create the URL for the call to the Agility API
@@ -274,7 +274,7 @@ func DestroyTopology(topologyId string) []byte {
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("DELETE", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username,password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -295,10 +295,14 @@ func DestroyTopology(topologyId string) []byte {
     //Stream the response body into a byte array and return it
     body, _ := ioutil.ReadAll(resp.Body)
     log.Println("response Body:", string(body))
-    return body
+    if resp.Status[:3] != "202" {
+        return nil
+    } else {
+        return body
+    }
 }
 
-func GetDeploymentPlans(blueprintId string, environmentId string) []byte {
+func GetDeploymentPlans(blueprintId string, environmentId string, username string, password string) []byte {
     var url bytes.Buffer
     // Create the URL for the call to the Agility API
     url.WriteString(configuration.APIURL)
@@ -310,7 +314,7 @@ func GetDeploymentPlans(blueprintId string, environmentId string) []byte {
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("GET", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username, password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -334,7 +338,7 @@ func GetDeploymentPlans(blueprintId string, environmentId string) []byte {
     return body
 }
 
-func GetTopologyDetail(topologyId string) []byte {
+func GetTopologyDetail(topologyId string, username string, password string) []byte {
     var url bytes.Buffer
     // Create the URL for the call to the Agility API
     url.WriteString(configuration.APIURL)
@@ -344,7 +348,7 @@ func GetTopologyDetail(topologyId string) []byte {
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("GET", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username, password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -367,7 +371,7 @@ func GetTopologyDetail(topologyId string) []byte {
     return body
 }
 
-func UpdateTopology(topologyId string, toplogy string) []byte {
+func UpdateTopology(topologyId string, toplogy string, username string, password string) []byte {
     var url bytes.Buffer
     // Create the URL for the call to the Agility API
     url.WriteString(configuration.APIURL)
@@ -378,7 +382,7 @@ func UpdateTopology(topologyId string, toplogy string) []byte {
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("PUT", url.String(), bytes.NewBuffer([]byte(toplogy)))
     req.Header.Set("Content-Type", "application/xml; charset=utf-8")
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username, password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -402,7 +406,7 @@ func UpdateTopology(topologyId string, toplogy string) []byte {
     return body
 }
 
-func GetTaskStatus(taskId string) []byte {
+func GetTaskStatus(taskId string, username string, password string) []byte {
     var url bytes.Buffer
     // Create the URL for the call to the Agility API
     url.WriteString(configuration.APIURL)
@@ -412,7 +416,7 @@ func GetTaskStatus(taskId string) []byte {
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("GET", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username, password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -436,7 +440,7 @@ func GetTaskStatus(taskId string) []byte {
     return body
 }
 
-func GetProjectId(projectName string) (string, error) {
+func GetProjectId(projectName string, username string, password string) (string, error) {
     log.Println("projectName is: ", projectName)
     var url bytes.Buffer
     q := new(Result)
@@ -448,7 +452,7 @@ func GetProjectId(projectName string) (string, error) {
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("GET", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username, password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -478,7 +482,7 @@ func GetProjectId(projectName string) (string, error) {
         // Read tokens from the XML document in a stream.
         t, _ := decoder.Token()
         if t == nil {
-            break
+            return "", errors.New("there are no Projects with this name")
         }
         if finish {
             break
@@ -519,7 +523,7 @@ func GetProjectId(projectName string) (string, error) {
     return string(q.Id), nil
 }
 
-func SearchTemplates(user string) []byte {
+func SearchTemplates(user string, username string, password string) []byte {
     var url bytes.Buffer
     // Create the URL for the call to the Agility API
     url.WriteString(configuration.APIURL)
@@ -529,7 +533,7 @@ func SearchTemplates(user string) []byte {
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("GET", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username, password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -553,7 +557,7 @@ func SearchTemplates(user string) []byte {
     return body
 }
 
-func GetInstanceDetail(instanceId string) []byte {
+func GetInstanceDetail(instanceId string, username string, password string) []byte {
     var url bytes.Buffer
     // Create the URL for the call to the Agility API
     url.WriteString(configuration.APIURL)
@@ -563,7 +567,7 @@ func GetInstanceDetail(instanceId string) []byte {
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("GET", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username, password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -586,7 +590,7 @@ func GetInstanceDetail(instanceId string) []byte {
     return body
 }
 
-func UpdateInstance(instanceId string, instance string) []byte {
+func UpdateInstance(instanceId string, instance string, username string, password string) []byte {
     var url bytes.Buffer
     // Create the URL for the call to the Agility API
     url.WriteString(configuration.APIURL)
@@ -597,7 +601,7 @@ func UpdateInstance(instanceId string, instance string) []byte {
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("PUT", url.String(), bytes.NewBuffer([]byte(instance)))
     req.Header.Set("Content-Type", "application/xml; charset=utf-8")
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username, password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -621,7 +625,7 @@ func UpdateInstance(instanceId string, instance string) []byte {
     return body
 }
 
-func GetEnvironmentId(environmntName string, projectId string) (string, error) {
+func GetEnvironmentId(environmntName string, projectId string, username string, password string) (string, error) {
     var url bytes.Buffer
     q := new(Result)
     // Create the URL for the call to the Agility API
@@ -633,7 +637,7 @@ func GetEnvironmentId(environmntName string, projectId string) (string, error) {
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("GET", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username, password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -662,7 +666,7 @@ func GetEnvironmentId(environmntName string, projectId string) (string, error) {
         // Read tokens from the XML document in a stream.
         t, _ := decoder.Token()
         if t == nil {
-            break
+            return "", errors.New("there are no Environments with this name")
         }
         if finish {
             break
@@ -704,7 +708,7 @@ func GetEnvironmentId(environmntName string, projectId string) (string, error) {
 
 }
 
-func GetBlueprintId(blueprintName string, projectId string) (string, error) {
+func GetBlueprintId(blueprintName string, projectId string, username string, password string) (string, error) {
     log.Println("The Blueprint name is: ", blueprintName)
     var url bytes.Buffer
     q := new(Result)
@@ -718,7 +722,7 @@ func GetBlueprintId(blueprintName string, projectId string) (string, error) {
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("GET", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username, password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -748,7 +752,7 @@ func GetBlueprintId(blueprintName string, projectId string) (string, error) {
         // Read tokens from the XML document in a stream.
         t, _ := decoder.Token()
         if t == nil {
-            break
+            return "", errors.New("there are no Blueprints with this name")
         }
         if finish {
             break
@@ -783,13 +787,13 @@ func GetBlueprintId(blueprintName string, projectId string) (string, error) {
     return string(q.Id), nil
 }
 
-func GetBlueprintIdForVersion(blueprintName string, projectId string, version string) (string, error) {
+func GetBlueprintIdForVersion(blueprintName string, projectId string, version string, username string, password string) (string, error) {
     var url bytes.Buffer
     log.Println("The Blueprint name is: ", blueprintName)
 
     // call the internal function to get all the templates owned by the user and get the slot ID 
     // for the storage of all the versions
-    slotId, err := GetBlueprintVersionsSlot(blueprintName, projectId, version)
+    slotId, err := GetBlueprintVersionsSlot(blueprintName, projectId, version, username, password)
     if err != nil {
         return "", err
     }
@@ -809,7 +813,7 @@ func GetBlueprintIdForVersion(blueprintName string, projectId string, version st
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("GET", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username, password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -852,7 +856,7 @@ func GetBlueprintIdForVersion(blueprintName string, projectId string, version st
 
             // get the details of the blueprint for the current blueprint 
             // in the list then parse the resulting XML
-            statusResponse := GetBlueprintDetail(list.Llist[i].Id)
+            statusResponse := GetBlueprintDetail(list.Llist[i].Id, username, password)
             sr := strings.NewReader(string(statusResponse))
             decoder := xml.NewDecoder(sr)
             for {
@@ -895,9 +899,9 @@ func GetBlueprintIdForVersion(blueprintName string, projectId string, version st
 
 }
 
-func GetBlueprintVersionsSlot(blueprintName string, projectId string, version string) (string, error) {
+func GetBlueprintVersionsSlot(blueprintName string, projectId string, version string, username string, password string) (string, error) {
     // get the blueprint ID for the blueprint name within the project
-    response, err := GetBlueprintId(blueprintName, projectId)
+    response, err := GetBlueprintId(blueprintName, projectId, username, password)
     if err != nil {
         return "", err
     }
@@ -915,7 +919,7 @@ func GetBlueprintVersionsSlot(blueprintName string, projectId string, version st
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("GET", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username, password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -973,7 +977,7 @@ func GetBlueprintVersionsSlot(blueprintName string, projectId string, version st
     return string(slotId), nil
 }
 
-func GetProject(projectId string) ([]byte, error) {
+func GetProject(projectId string, username string, password string) ([]byte, error) {
     var url bytes.Buffer
     // Create the URL for the call to the Agility API
     url.WriteString(configuration.APIURL)
@@ -983,7 +987,7 @@ func GetProject(projectId string) ([]byte, error) {
 
     // Set the right HTTP Verb, and setup HTTP Basic Security
     req, err := http.NewRequest("GET", url.String(), nil)
-    req.SetBasicAuth(configuration.AccessKey,configuration.SecretKey)
+    req.SetBasicAuth(username, password)
 
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},

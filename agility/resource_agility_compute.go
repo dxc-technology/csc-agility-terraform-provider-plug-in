@@ -547,6 +547,13 @@ type ScriptstatusLink struct {
 	Position 	string   	`xml:"position,omitempty"`
 }
 
+type ProvCredentials struct {
+	UserName  	string	
+	Password 	string
+}
+
+var credentials ProvCredentials
+
 func resourceAgilityCompute() *schema.Resource {
 
 	return &schema.Resource{
@@ -646,6 +653,9 @@ func resourceAgilityComputeCreate(ResourceData *schema.ResourceData, meta interf
 
     log.SetOutput(f)
 
+    // set the credentials from the Provider initilisation
+    credentials = meta.(ProvCredentials)
+
 
     errProj := checkProject(ResourceData)
     log.Println("errProj is: ", errProj)
@@ -702,6 +712,9 @@ func resourceAgilityComputeUpdate(d *schema.ResourceData, meta interface{}) erro
 
     log.SetOutput(f)
 
+    // set the credentials from the Provider initilisation
+    credentials = meta.(ProvCredentials)
+
     // if the active resource variable is changed to 'true' then start the topology
     // if this is the first time this has happend after the creation of the topology (createdStopped is true)
     // then also change the name(s) of the instances started
@@ -739,55 +752,63 @@ func resourceAgilityComputeUpdate(d *schema.ResourceData, meta interface{}) erro
 
 func resourceAgilityComputeDelete(d *schema.ResourceData, meta interface{}) error {
 	//Set up logging
-    // f, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
-    // if errf != nil {
-    //     log.Println("error opening file: ", errf)
-    // }
-    // defer f.Close()
+    f, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+    if errf != nil {
+        log.Println("error opening file: ", errf)
+    }
+    defer f.Close()
 
-    // log.SetOutput(f)
+    log.SetOutput(f)
+
+    // set the credentials from the Provider initilisation
+    credentials = meta.(ProvCredentials)
+
 	// call the API to delete the topology identified by the ID if this resource.
 	// this will take a while, so call the GeTaksStatus function to loop and wait until it completes
     log.Println("Starting the Topology Destroy")
     log.Println("TopologyId is: ", d.Id())
-	response := api.DestroyTopology(d.Id())
+	response := api.DestroyTopology(d.Id(), credentials.UserName, credentials.Password)
 
-	r := strings.NewReader(string(response))
-	decoder := xml.NewDecoder(r)
-	finish := false
-	for {
-		// Read tokens from the XML document in a stream.
-		t, _ := decoder.Token()
-		if t == nil {
-			break
-		}
-		if finish {
-            break
-        }
-		// parse the result and loop for and of created task
-		switch Element := t.(type) {
-		case xml.StartElement:
-			if Element.Name.Local == "Task" {
-				log.Println("Element name is : ", Element.Name.Local)
-
-				var q DeployTask
-				err := decoder.DecodeElement(&q, &Element)
-				if err != nil {
-					log.Println(err)
-				}
-
-				log.Println("status value is :", q.Status)
-				if q.Status == "Pending" {
-					GetTaskStatus(d,q.Id)
-					d.SetId("")
-					finish = true
-				}
+	if response != nil {
+		r := strings.NewReader(string(response))
+		decoder := xml.NewDecoder(r)
+		finish := false
+		for {
+			// Read tokens from the XML document in a stream.
+			t, _ := decoder.Token()
+			if t == nil {
+				break
 			}
-		default:
-		}
-	}
+			if finish {
+	            break
+	        }
+			// parse the result and loop for and of created task
+			switch Element := t.(type) {
+			case xml.StartElement:
+				if Element.Name.Local == "Task" {
+					log.Println("Element name is : ", Element.Name.Local)
 
-	return nil
+					var q DeployTask
+					err := decoder.DecodeElement(&q, &Element)
+					if err != nil {
+						log.Println(err)
+					}
+
+					log.Println("status value is :", q.Status)
+					if q.Status == "Pending" {
+						GetTaskStatus(d,q.Id)
+						d.SetId("")
+						finish = true
+					}
+				}
+			default:
+			}
+		}
+		return nil
+	} else {
+		return errors.New("error is deleting the compute resource")
+	}
+	
 }
 
 func StartTopology(d *schema.ResourceData,id string) {
@@ -800,8 +821,10 @@ func StartTopology(d *schema.ResourceData,id string) {
 
     log.SetOutput(f)
 
+    log.Println("Starting Topology "+id)
+
     // call the Agility API to start the topology with the ID passed in
-	response := api.StartTopology(id)
+	response := api.StartTopology(id, credentials.UserName, credentials.Password)
 
 	log.Println("\n response is:",string(response))
 
@@ -847,7 +870,7 @@ func StopTopology(d *schema.ResourceData,id string) {
 
     log.SetOutput(f)
 
-	response := api.StopTopology(id)
+	response := api.StopTopology(id, credentials.UserName, credentials.Password)
 
 	log.Println("\n response is:",string(response))
 
@@ -884,10 +907,19 @@ func StopTopology(d *schema.ResourceData,id string) {
 }
 
 func UpdateTopologyName(d *schema.ResourceData, topologyId string) {
+	//set up logging
+	f, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+    if errf != nil {
+        log.Println("error opening file: ", errf)
+    }
+    defer f.Close()
+
+    log.SetOutput(f)
+
     var tp Topology
     var finished = false
 	// call the Agility API to get the topology details with the ID passed in
-	statusResponse := api.GetTopologyDetail(topologyId)
+	statusResponse := api.GetTopologyDetail(topologyId, credentials.UserName, credentials.Password)
 
 	//if the result was successful then then parse the resultant XML
 	// looking for the Topology element. When found UnMarshal it into an
@@ -931,13 +963,22 @@ func UpdateTopologyName(d *schema.ResourceData, topologyId string) {
 	update := xml.Header + string(xmlStr)
 
 	// update the topology changing it's name
-	response := api.UpdateTopology(topologyId, update)
+	api.UpdateTopology(topologyId, update, credentials.UserName, credentials.Password)
 
-	log.Println("\n response is:",string(response))
+	//log.Println("\n response is:",string(response))
 
 }
 
 func UpdateInstanceName(d *schema.ResourceData, topologyId string) error {
+	//set up logging
+	f, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+    if errf != nil {
+        log.Println("error opening file: ", errf)
+    }
+    defer f.Close()
+
+    log.SetOutput(f)
+
 	var a AssetList
 	var inst Instance
     var finished = false
@@ -947,7 +988,7 @@ func UpdateInstanceName(d *schema.ResourceData, topologyId string) error {
     log.Println("Updating Instance name ")
 
     //Call the API to search for templates owned by the user defined in the conf.json file
-	statusResponse := api.SearchTemplates(configuration.AccessKey)
+	statusResponse := api.SearchTemplates(credentials.UserName, credentials.UserName, credentials.Password)
 	
 	err := xml.Unmarshal(statusResponse, &a)
 	if err != nil {
@@ -972,7 +1013,7 @@ func UpdateInstanceName(d *schema.ResourceData, topologyId string) error {
 			log.Println("topologyId is: ", topologyId)
 			log.Println("a.AList[i].Topology.Id is: ", a.AList[i].Topology.Id)
 			if topologyId != a.AList[i].Topology.Id {
-				statusResponse := api.GetTopologyDetail(a.AList[i].Topology.Id)
+				statusResponse := api.GetTopologyDetail(a.AList[i].Topology.Id, credentials.UserName, credentials.Password)
 				sr := strings.NewReader(string(statusResponse))
 				decoder := xml.NewDecoder(sr)
 				for {
@@ -1011,7 +1052,7 @@ func UpdateInstanceName(d *schema.ResourceData, topologyId string) error {
 						instanceId = a.AList[i].Instances[j].Id
 						log.Println("instanceId is : ", instanceId)
 						log.Println("Getting the Instance. Instance Id is: ",instanceId)
-						statusResponse = api.GetInstanceDetail(instanceId)
+						statusResponse = api.GetInstanceDetail(instanceId, credentials.UserName, credentials.Password)
 
 						//unmarshall the XML result into a temp struct
 						err := xml.Unmarshal(statusResponse, &inst)
@@ -1033,7 +1074,7 @@ func UpdateInstanceName(d *schema.ResourceData, topologyId string) error {
 						log.Println("updated instance is:",update)
 
 						// call the API to update to change the name
-						response := api.UpdateInstance(instanceId, update)
+						response := api.UpdateInstance(instanceId, update, credentials.UserName, credentials.Password)
 
 						log.Println("\n response is:",string(response))
 						instanceUpdated = true
@@ -1054,7 +1095,7 @@ func UpdateInstanceName(d *schema.ResourceData, topologyId string) error {
 							instanceId = a.AList[i].Instances[j].Id
 							log.Println("instanceId is : ", instanceId)
 							log.Println("Getting the Instance. Instance Id is: ",instanceId)
-							statusResponse = api.GetInstanceDetail(instanceId)
+							statusResponse = api.GetInstanceDetail(instanceId, credentials.UserName, credentials.Password)
 
 							//unmarshall the XML result into a temp struct
 							err := xml.Unmarshal(statusResponse, &inst)
@@ -1076,7 +1117,7 @@ func UpdateInstanceName(d *schema.ResourceData, topologyId string) error {
 							log.Println("updated instance is:",update)
 
 							// call the API to update to change the name
-							response := api.UpdateInstance(instanceId, update)
+							response := api.UpdateInstance(instanceId, update, credentials.UserName, credentials.Password)
 
 							log.Println("\n response is:",string(response))
 							instanceUpdated = true
@@ -1096,7 +1137,8 @@ func UpdateInstanceName(d *schema.ResourceData, topologyId string) error {
 	return nil
 }
 
-func GetTaskStatus(d *schema.ResourceData,id string) {
+func GetTaskStatus(d *schema.ResourceData,id string) error {
+
 	log.Println("\n id is:",id)
 	var finished bool = false
 	//it might take a while for the Pending status to appear, so keep trying
@@ -1105,7 +1147,7 @@ func GetTaskStatus(d *schema.ResourceData,id string) {
 			break
 		}
 		//get the ststus of the task
-		statusResponse := api.GetTaskStatus(id)
+		statusResponse := api.GetTaskStatus(id, credentials.UserName, credentials.Password)
 
 		log.Println("\n response is:",string(statusResponse))
 		sr := strings.NewReader(string(statusResponse))
@@ -1154,15 +1196,26 @@ func GetTaskStatus(d *schema.ResourceData,id string) {
 						finished = true
 					} else if string(q.Value) == "Completed Topology Stop" {
 						finished = true
+					} else if string(q.Value) == "Completed" {
+						//time.Sleep(20000 * time.Millisecond)
+						finished = true
 					} else if string(q.Value)[:6] == "Delete" {
 						finished = true
+					} else if len(string(q.Value)) > 26 {
+						if string(q.Value)[:26] == "Unable to deploy blueprint" {
+							return errors.New(string(q.Value))
+						} else {
+							log.Println("Status value is :", string(q.Value))
+							time.Sleep(20000 * time.Millisecond)
+						}
 					} else {
-						log.Println("Status substring value is :", string(q.Value)[:6])
+						log.Println("Status value is :", string(q.Value))
 						time.Sleep(20000 * time.Millisecond)
 					}
 				}
 			default:
-			}
+			} 
 		}
 	}
+	return nil
 }

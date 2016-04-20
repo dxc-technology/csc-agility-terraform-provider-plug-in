@@ -421,6 +421,15 @@ func resourceAgilityBlueprintDeploy(d *schema.ResourceData, meta interface{}) er
 }*/
 
 func deployBlueprint(d *schema.ResourceData) error {
+	//Set up logging
+    f, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+    if errf != nil {
+        log.Println("error opening file: ", errf)
+    }
+    defer f.Close()
+
+    log.SetOutput(f)
+
 	// get the value of the Project ID created by the creation of the Project Resource.
 	// if that is OK as well as the Name, the get the right bluerint ID, depending on whether 
 	// a Version number was supplied of not
@@ -430,16 +439,19 @@ func deployBlueprint(d *schema.ResourceData) error {
 	if ok_projectId {
 		blueprintName, ok_blueprintName := d.GetOk("blueprint")
 		log.Println("Blueprint name is : ", blueprintName.(string))
+		log.Println("username for blueprint creation is : ", credentials.UserName)
+		log.Println("password for blueprint creation is : ", credentials.Password)
+		log.Println("Blueprint name is : ", blueprintName.(string))
 		if ok_blueprintName {
 			version, ok_version := d.GetOk("version")
 			if ok_version {
-				response, err := api.GetBlueprintIdForVersion(blueprintName.(string), projectId.(string), version.(string))
+				response, err := api.GetBlueprintIdForVersion(blueprintName.(string), projectId.(string), version.(string), credentials.UserName, credentials.Password)
 				if err != nil {
 					return err
 				}
 				blueprintId = response
 			} else {
-				response, err := api.GetBlueprintId(blueprintName.(string), projectId.(string))
+				response, err := api.GetBlueprintId(blueprintName.(string), projectId.(string), credentials.UserName, credentials.Password)
 				if err != nil {
 					return err
 				}
@@ -496,7 +508,7 @@ func deployBlueprint(d *schema.ResourceData) error {
 				log.Println("deploymentPlan is : ", deploymentPlan)
 				// when the deployment plan is supplied then start the bluerint using that plan
 				if deploymentPlan != "No Plan" {
-					deployResponse := api.DeploymentPlanBlueprintDeploy(blueprintId.(string), environmentId.(string), deploymentPlan)
+					deployResponse := api.DeploymentPlanBlueprintDeploy(blueprintId.(string), environmentId.(string), deploymentPlan, credentials.UserName, credentials.Password)
 					r := strings.NewReader(string(deployResponse))
 					log.Println("Deploy response is : ", r)
 					decoder := xml.NewDecoder(r)
@@ -525,10 +537,14 @@ func deployBlueprint(d *schema.ResourceData) error {
 
 									log.Println("status value is :", q.Status)
 									if q.Status == "Pending" {
-										GetTaskStatus(d,q.Id)
+										err := GetTaskStatus(d,q.Id)
+										if err != nil {
+											log.Println(err)
+										}
+										return err
 										//topologyId := d.Get("TopologyId").(string)
 										//d.SetId(topologyId)
-										finish = true
+										//finish = true
 									}
 								}
 							default:
@@ -541,7 +557,7 @@ func deployBlueprint(d *schema.ResourceData) error {
 				// if the type (size of machine) is not supplied then just deploy th eblueprint using the default deployment plan
 				// that Agility creates
 				log.Println("BlueprintId is : ", blueprintId.(string))
-				deployResponse := api.SimpleBlueprintDeploy(blueprintId.(string), environmentId.(string))
+				deployResponse := api.SimpleBlueprintDeploy(blueprintId.(string), environmentId.(string), credentials.UserName, credentials.Password)
 				r := strings.NewReader(string(deployResponse))
 				log.Println("Deploy response is : ", r)
 				decoder := xml.NewDecoder(r)
@@ -653,6 +669,15 @@ func deployBlueprint(d *schema.ResourceData) error {
 // }
 
 func GetDeploymentPlan(d *schema.ResourceData, blueprintId string, environmentId string) (result string, err error) {
+	//Set up logging
+    f, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+    if errf != nil {
+        log.Println("error opening file: ", errf)
+    }
+    defer f.Close()
+
+    log.SetOutput(f)
+
 	var finished bool = false
 	var dp DeploymentPlan
 	var i,j int 
@@ -669,7 +694,9 @@ func GetDeploymentPlan(d *schema.ResourceData, blueprintId string, environmentId
 		if finished == true {
 			break
 		}
-		statusResponse := api.GetDeploymentPlans(blueprintId , environmentId)
+		log.Println("username for deploymentPlan determination is : ", credentials.UserName)
+		log.Println("password for deploymentPlan determination is : ", credentials.Password)
+		statusResponse := api.GetDeploymentPlans(blueprintId , environmentId, credentials.UserName, credentials.Password)
 
 		log.Println("\n GetDeploymentPlans response is:",string(statusResponse))
 		sr := strings.NewReader(string(statusResponse))
@@ -792,7 +819,16 @@ func GetDeploymentPlan(d *schema.ResourceData, blueprintId string, environmentId
 }
 
 func CreateChildList(d *schema.ResourceData, index2 int, childDepth int, currentDepth int, resourceIndex int, children DPOptionChild, size string) *DPOptionChild {
-	// just keeping track on where we are for debuggin purposes
+	//Set up logging
+    f, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+    if errf != nil {
+        log.Println("error opening file: ", errf)
+    }
+    defer f.Close()
+
+    log.SetOutput(f)
+
+    // just keeping track on where we are for debuggin purposes
 	log.Println("currentDepth is: ", currentDepth)
 	log.Println("childDepth is: ", childDepth)
 	var Child DPOptionChild
@@ -832,16 +868,25 @@ func CreateChildList(d *schema.ResourceData, index2 int, childDepth int, current
 		log.Println("resourceIndex is: ",resourceIndex)
 		var ResourceList []DPOptionResource
 		rlIndex := 0
-		for i := 0; i < 100; i++ {
-			if i < len(children.OptionList[index2].ResourceList) {
-				log.Println("children.OptionList[index2].ResourceList[i].Name is :", children.OptionList[index2].ResourceList[i].Name)
-				log.Println("i is :", i, "and len(children.OptionList[index2].ResourceList) is: ", len(children.OptionList[index2].ResourceList))
-				// there are some optional elements that we need to plan for, 
-				// but it's the particular 'model' value we are after (there could be a number of them)
-				if children.OptionList[index2].ResourceList[i].HREF != "" {
-					log.Println("children.OptionList[index2].ResourceList[i].HREF is :", children.OptionList[index2].ResourceList[i].HREF)
-					if strings.Contains(children.OptionList[index2].ResourceList[i].HREF, "model/") {
-						if children.OptionList[index2].ResourceList[i].Name == size {
+		length := len(children.OptionList[index2].ResourceList)
+		if length != 0 {
+			for i := 0; i < length; i++ {
+				if i < len(children.OptionList[index2].ResourceList) {
+					log.Println("children.OptionList[index2].ResourceList[i].Name is :", children.OptionList[index2].ResourceList[i].Name)
+					log.Println("i is :", i, "and len(children.OptionList[index2].ResourceList) is: ", len(children.OptionList[index2].ResourceList))
+					// there are some optional elements that we need to plan for, 
+					// but it's the particular 'model' value we are after (there could be a number of them)
+					if children.OptionList[index2].ResourceList[i].HREF != "" {
+						log.Println("children.OptionList[index2].ResourceList[i].HREF is :", children.OptionList[index2].ResourceList[i].HREF)
+						if strings.Contains(children.OptionList[index2].ResourceList[i].HREF, "model/") {
+							if children.OptionList[index2].ResourceList[i].Name == size {
+								log.Println("children.OptionList[index2].ResourceList[i] is: ", children.OptionList[index2].ResourceList[i])
+								ResourceList = append(ResourceList, children.OptionList[index2].ResourceList[i])
+								log.Println("ResourceList[rlIndex] is: ", ResourceList[rlIndex])
+								rlIndex = rlIndex + 1
+							}
+						} else {
+							// we still have to add the other resources
 							log.Println("children.OptionList[index2].ResourceList[i] is: ", children.OptionList[index2].ResourceList[i])
 							ResourceList = append(ResourceList, children.OptionList[index2].ResourceList[i])
 							log.Println("ResourceList[rlIndex] is: ", ResourceList[rlIndex])
@@ -855,18 +900,16 @@ func CreateChildList(d *schema.ResourceData, index2 int, childDepth int, current
 						rlIndex = rlIndex + 1
 					}
 				} else {
-					// we still have to add the other resources
-					log.Println("children.OptionList[index2].ResourceList[i] is: ", children.OptionList[index2].ResourceList[i])
-					ResourceList = append(ResourceList, children.OptionList[index2].ResourceList[i])
-					log.Println("ResourceList[rlIndex] is: ", ResourceList[rlIndex])
-					rlIndex = rlIndex + 1
+					log.Println("No more Resources")
+					break
 				}
-			} else {
-				log.Println("No more Resources")
-				break
+				log.Println("Looping Again")
 			}
-			log.Println("Looping Again")
+		} else {
+			log.Println("there is no match for the size requirement")
+			return nil
 		}
+		
 
 		log.Println("Finished getting Resource List")
 
@@ -894,13 +937,24 @@ func CreateChildList(d *schema.ResourceData, index2 int, childDepth int, current
 }
 
 func ParseDeploymentPlan (d *schema.ResourceData, j int, resourceIndex *int, childDepth *int, child DPOptionChild, size string) {
-	finished := false
+	//Set up logging
+    f, errf := os.OpenFile("agility.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+    if errf != nil {
+        log.Println("error opening file: ", errf)
+    }
+    defer f.Close()
+
+    log.SetOutput(f)
+
+    finished := false
 	log.Println("childDepth is: ", *childDepth)
 	log.Println("Starting the XML traversing function")
 	log.Println("child.Item.HREF is :", child.Item.HREF)
 	// its teh Workload HREF we are looking for, but only the one were the value is teh right size
+	length := len(child.OptionList[j].ResourceList)
+	log.Println("length of child.OptionList[j].ResourceList is :", length)
 	if strings.Contains(child.Item.HREF, "workload/") {
-		for k := 0; k < 10; k++{
+		for k := 0; k < length; k++{
 			if finished == true {
 				break
 			}
@@ -916,12 +970,12 @@ func ParseDeploymentPlan (d *schema.ResourceData, j int, resourceIndex *int, chi
 		// if this is not the  one we are looking for, and gobe through all teh resources at this level,
 		// then go deeper
 		log.Println("child.OptionList[j].Name is :", child.OptionList[j].Name)
-		for k := 0; k < 10; k++{
+		for k := 0; k < length; k++{
 			if finished == true {
 				break
 			}
 			log.Println("child.OptionList[j].ChildList[k].Item.name is :", child.OptionList[j].ChildList[k].Item.Name)
-			for l := 0; l < 10; l++{
+			for l := 0; l < length; l++{
 				if finished == true {
 					break
 				}

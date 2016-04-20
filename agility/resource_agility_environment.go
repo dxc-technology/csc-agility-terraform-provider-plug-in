@@ -84,7 +84,7 @@ func checkEnvironment(d *schema.ResourceData) error {
 
 	if ok_projectId {
 		//get the ID of the Environment by calling the Agility API
-		response, err := api.GetEnvironmentId(d.Get("environment").(string), projectId.(string))
+		response, err := api.GetEnvironmentId(d.Get("environment").(string), projectId.(string), credentials.UserName, credentials.Password)
 		if err != nil {
 			return err
 		}

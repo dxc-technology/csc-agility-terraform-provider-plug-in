@@ -43,107 +43,62 @@ Terraform is built on a plugin-based architecture. All providers and provisioner
 #### The agility.tf file
 The agility.tf file is where you configure Terraform to create/update/delete a "Topology" based on a Blueprint and Policies in the Agility Platform
 
-`provider "agility" {}`
+`variable "agility_userid" {}`
+
+`variable "agility_password" {}`
+
+`provider "agility" {`
+
+&nbsp;&nbsp;&nbsp;    `userid = "${var.agility_userid}"`
+    
+&nbsp;&nbsp;&nbsp;    `password = "${var.agility_password}"`
+
+`}`
 
 `# Create a new Linux instance on a small server`
 
 `resource "agility_compute" "myserver" {`
 
-&nbsp;&nbsp;&nbsp;`    depends_on = ["agility_blueprint.myserver"]`
+&nbsp;&nbsp;&nbsp;   `name = "myserver"`
 
-&nbsp;&nbsp;&nbsp;`    name = "myserver"` 
+&nbsp;&nbsp;&nbsp;    `active = "true"`
 
-&nbsp;&nbsp;&nbsp;`    active = "true"`   
+&nbsp;&nbsp;&nbsp;    `version = "1"`
 
-&nbsp;&nbsp;&nbsp;`	   TopologyId = "${agility_blueprint.myserver.TopologyId}"`
+&nbsp;&nbsp;&nbsp;    `type = "XS"`
 
-`}`
+&nbsp;&nbsp;&nbsp;    `blueprint = "Demo Server"`
 
-`resource "agility_blueprint" "myserver" {`
+&nbsp;&nbsp;&nbsp;    `environment = "Dev"`
 
-&nbsp;&nbsp;&nbsp;`    depends_on = ["agility_environment.Dev"]`
-
-&nbsp;&nbsp;&nbsp;`    name = "Demo Server"`
-
-&nbsp;&nbsp;&nbsp;`    version = "1"`
-
-&nbsp;&nbsp;&nbsp;`    type = "XS"`
-
-&nbsp;&nbsp;&nbsp;`    EnvironmentId = "${agility_environment.Dev.id}"`
-
-&nbsp;&nbsp;&nbsp;`    ProjectId = "${agility_project.Demo.id}"`
+&nbsp;&nbsp;&nbsp;    `project = "Demo"`
 
 `}`
-
-`resource "agility_environment" "Dev" {`
-
-&nbsp;&nbsp;&nbsp;`  	depends_on = ["agility_project.Demo"]`
-
-&nbsp;&nbsp;&nbsp;`  	name = "Dev"`
-
-&nbsp;&nbsp;&nbsp;`  	ProjectId = "${agility_project.Demo.id}"`
-
-`}`
-
-`resource "agility_project" "Demo" {`
-
-&nbsp;&nbsp;&nbsp;`	name = "Demo"`
-
-`} `
 
 In the above example, an **"agility_compute"** terraform resource with the name of **'myserver'** will be created in the **"agility" provider**. Which means that a topology called myserver with be created in Agility.
+
+*The Provider called "agility" takes two parameters (userid and password). These are set from Terraform Variables (agility_userid, agility_password). These, in turn, are set from Environment Variables (TF_VAR_agility_userid and TF_VAR_agility_password).
 
 *Changing the name parameter of the agility_compute resource will make the plugin change the name of the VM and Topology in Agility, without affecting the VM* **This is Manditory**
 
 *Changing the active parameter of the agility_compute resource will make the plugin either stop or Start the VM. 'true' means start, 'false' means stop* **This is Manditory**
 
-**The compute resource will not be created until the "agility_blueprint" resource is created. For this Plugin 'created' means found in Agility.** 
+*The `version = "1"` tells the plugin to use version 1 of the blueprint. If this parameter is omited the plugin will use the latest version of the blueprint.*
 
-&nbsp;&nbsp;&nbsp;The `name = "Demo Server"` tells the plugin to search agility for a blueprint in the project called 'Demo Server'. **This is Manditory**
+*The `type = "XS"` tells the plugin to use the equivalent computer definition for the cloud the blueprint will be deployed into.* **This is Manditory**
 
-&nbsp;&nbsp;&nbsp;The `name = "Demo Server"` tells the plugin to search agility for a blueprint in the project called 'Demo Server'. **This is Manditory**
+*The `blueprint = "Demo Server"` tells the plugin to search agility for a blueprint in the project called 'Demo Server'. **This is Manditory**
 
-&nbsp;&nbsp;&nbsp;The `version = "1"` tells the plugin to use version 1 of the blueprint. If this paramet is omited the plugin will use the latest version of the blueprint.
+*The `environment = "Dev"` tells the plugin to search agility for a blueprint in the project called 'Demo Server'. **This is Manditory**
 
-&nbsp;&nbsp;&nbsp;The `type = "XS"` tells the plugin to use the equivalent computer definition for the cloud the blueprint will be deployed into. **This is Manditory**
+*The `project = "Demo"` tells the plugin to search agility for a blueprint in the project called 'Demo Server'. **This is Manditory**
 
-&nbsp;&nbsp;&nbsp;The `EnvironmentId = "${agility_environment.Dev.id}"` tells the plugin to use the ID of the Agility Environment defined by the "agility_environment" resource. **This is Manditory**
+***Putting this all together, A small VM called myserver will be created in the Dev Environment, of the Demo Project in Agility, based on the 'Demo Server' blueprint***
 
-&nbsp;&nbsp;&nbsp;The `ProjectId = "${agility_project.Demo.id}"` tells the plugin to use the ID of the Agility Project defined by the "agility_project" resource. **This is Manditory**
+### Troubleshooting
+The Plugin writes details of its actions to an *agility.log* file in the same directory as the agility.tf file
 
-**The "agility_blueprint" resource will not be created until the "agility_environment" resource is created. For this Plugin 'created' means found in Agility.** 
-
-This code:
-
-`resource "agility_environment" "Dev" {`
-
-&nbsp;&nbsp;&nbsp;`  	depends_on = ["agility_project.Demo"]`
-
-&nbsp;&nbsp;&nbsp;`  	name = "Dev"`
-
-&nbsp;&nbsp;&nbsp;`  	ProjectId = "${agility_project.Demo.id}"`
-
-`}`
-
-just tells the plugin that an Agility Environment call 'Dev' has to exist in the Agility Project.
-
-
-**The "agility_environment" resource will not be created until the "agility_project" resource is created. For this Plugin 'created' means found in Agility.** 
-
-This code:
-
-`resource "agility_project" "Demo" {`
-
-&nbsp;&nbsp;&nbsp;`	name = "Demo"`
-
-`} `
-
-just tells the plugin that an Agility Project call 'Demo' has to exist in the Agility Project
-
-
-***Putting this all together, A small VM call myserver will be created in the Dev Environment, of the Demo Project in Agility, based on the 'Demo Server' blueprint***
-
-
+Use the contents of this file when reporting issues with the plugin, or trying to determine what the plugin is doing.
 
 ### License
 Put a link to an open source license

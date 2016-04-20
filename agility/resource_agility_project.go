@@ -58,7 +58,7 @@ func checkProject(ResourceData *schema.ResourceData) error {
 	log.Println("the Project name is: ", projectName)
 
 	// call the Agility API to get the ID of the Project being asked to deploy into
-	response, err := api.GetProjectId(string(projectName))
+	response, err := api.GetProjectId(string(projectName), credentials.UserName, credentials.Password)
 	if err != nil {
 		log.Println("Error in getting ProjectId: ", err)
 		return err
