@@ -9,7 +9,7 @@ import (
 	"os"
 	//"encoding/json"
 
-	"github.com/pogo61/terraform-provider-agility/agility/api"
+	"github.com/csc/csc-agility-terraform-provider-plug-in/agility/api"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
