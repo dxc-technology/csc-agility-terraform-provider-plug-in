@@ -79,19 +79,19 @@ In the above example, an **"agility_compute"** terraform resource with the name 
 
 *The Provider called "agility" takes two parameters (userid and password). These are set from Terraform Variables (agility_userid, agility_password). These, in turn, are set from Environment Variables (TF_VAR_agility_userid and TF_VAR_agility_password).
 
-*Changing the name parameter of the agility_compute resource will make the plugin change the name of the VM and Topology in Agility, without affecting the VM* **This is Manditory**
+*Changing the name parameter of the agility_compute resource will make the plugin change the name of the VM and Topology in Agility, without affecting the VM* **This is Mandatory**
 
-*Changing the active parameter of the agility_compute resource will make the plugin either stop or Start the VM. 'true' means start, 'false' means stop* **This is Manditory**
+*Changing the active parameter of the agility_compute resource will make the plugin either stop or Start the VM. 'true' means start, 'false' means stop* **This is Mandatory**
 
 *The `version = "1"` tells the plugin to use version 1 of the blueprint. If this parameter is omited the plugin will use the latest version of the blueprint.*
 
-*The `type = "XS"` tells the plugin to use the equivalent computer definition for the cloud the blueprint will be deployed into.* **This is Manditory**
+*The `type = "XS"` tells the plugin to use the equivalent computer definition for the cloud the blueprint will be deployed into.* **This is Mandatory**
 
-*The `blueprint = "Demo Server"` tells the plugin to search agility for a blueprint in the project called 'Demo Server'. **This is Manditory**
+*The `blueprint = "Demo Server"` tells the plugin to search agility for a blueprint in the project called 'Demo Server'. **This is Mandatory**
 
-*The `environment = "Dev"` tells the plugin to search agility for a blueprint in the project called 'Demo Server'. **This is Manditory**
+*The `environment = "Dev"` tells the plugin to search agility for an environment in the project called 'Dev'. **This is Mandatory**
 
-*The `project = "Demo"` tells the plugin to search agility for a blueprint in the project called 'Demo Server'. **This is Manditory**
+*The `project = "Demo"` tells the plugin to search agility for a project called 'Demo'. **This is Mandatory**
 
 ***Putting this all together, A small VM called myserver will be created in the Dev Environment, of the Demo Project in Agility, based on the 'Demo Server' blueprint***
 
