@@ -199,8 +199,6 @@ type Status struct {
 }*/
 
 type Config struct {
-    AccessKey  	string
-    SecretKey  	string
     MaxRetries 	string
     APIURL     	string
     AWSXS  		string
