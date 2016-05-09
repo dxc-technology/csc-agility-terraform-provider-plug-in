@@ -1092,46 +1092,50 @@ func UpdateInstanceName(d *schema.ResourceData, topologyId string) error {
 			} else {
 				// if there ins't a parent (No 'Cloud Afinity' was defined) then get the original topology's instance
 				// and create instance struct, change it's name and call the API to update it
-				if a.AList[i].Instances != nil && len(a.AList[i].Instances) > 0 {
-					instanceId = a.AList[i].Instances[0].Id
-					log.Println("instanceId is : ", instanceId)
-					log.Println("len(a.AList[i].Instances) is : ", len(a.AList[i].Instances))
-					for j := 0; j < len(a.AList[i].Instances); j++ {
-						if finished == true {
-							break
-						}
-						instanceId = a.AList[i].Instances[j].Id
+				if a.AList[i].Stats.NumInstances !=  "0" {
+					if a.AList[i].Instances != nil && len(a.AList[i].Instances) > 0 {
+						instanceId = a.AList[i].Instances[0].Id
 						log.Println("instanceId is : ", instanceId)
-						log.Println("Getting the Instance. Instance Id is: ",instanceId)
-						statusResponse = api.GetInstanceDetail(instanceId, credentials.UserName, credentials.Password)
+						log.Println("len(a.AList[i].Instances) is : ", len(a.AList[i].Instances))
+						for j := 0; j < len(a.AList[i].Instances); j++ {
+							if finished == true {
+								break
+							}
+							instanceId = a.AList[i].Instances[j].Id
+							log.Println("instanceId is : ", instanceId)
+							log.Println("Getting the Instance. Instance Id is: ",instanceId)
+							statusResponse = api.GetInstanceDetail(instanceId, credentials.UserName, credentials.Password)
 
-						//unmarshall the XML result into a temp struct
-						err := xml.Unmarshal(statusResponse, &inst)
-						if err != nil {
-							log.Println(err)
-							return err
+							//unmarshall the XML result into a temp struct
+							err := xml.Unmarshal(statusResponse, &inst)
+							if err != nil {
+								log.Println(err)
+								return err
+							}
+
+							//update struct with name
+							inst.Name = d.Get("name").(string)+"-"+strconv.Itoa(j+1)
+							inst.XMLNS =  "http://servicemesh.com/agility/api"
+							//marshall into XML
+							xmlStr, err := xml.MarshalIndent(inst, "", "    ")
+							if err != nil {
+								log.Printf("error: %v\n", err)
+							}
+
+							update := xml.Header + string(xmlStr)
+							log.Println("updated instance is:",update)
+
+							// call the API to update to change the name
+							response := api.UpdateInstance(instanceId, update, credentials.UserName, credentials.Password)
+
+							log.Println("\n response is:",string(response))
+							instanceUpdated = true
 						}
-
-						//update struct with name
-						inst.Name = d.Get("name").(string)+"-"+strconv.Itoa(j+1)
-						inst.XMLNS =  "http://servicemesh.com/agility/api"
-						//marshall into XML
-						xmlStr, err := xml.MarshalIndent(inst, "", "    ")
-						if err != nil {
-							log.Printf("error: %v\n", err)
-						}
-
-						update := xml.Header + string(xmlStr)
-						log.Println("updated instance is:",update)
-
-						// call the API to update to change the name
-						response := api.UpdateInstance(instanceId, update, credentials.UserName, credentials.Password)
-
-						log.Println("\n response is:",string(response))
-						instanceUpdated = true
+					} else {
+						return errors.New("UpdateInstanceName: template contained no instances")
 					}
 				} else {
-					return errors.New("UpdateInstanceName: template contained no instances")
+					return errors.New("UpdateInstanceName: template in Error State, please check while it contained no instances")
 				}
 			}
 			
