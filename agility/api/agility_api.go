@@ -35,7 +35,7 @@ type Link struct {
 }
 
 type Result struct {
-    XMLName     struct{}    `xml:link"`
+    XMLName     struct{}    `xml:"link"`
     Name        string      `xml:"name"`
     Href        string      `xml:"href"`
     Id          string      `xml:"id"`

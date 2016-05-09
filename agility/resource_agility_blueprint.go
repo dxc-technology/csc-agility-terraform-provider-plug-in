@@ -199,8 +199,6 @@ type Status struct {
 }*/
 
 type Config struct {
-    AccessKey  	string
-    SecretKey  	string
     MaxRetries 	string
     APIURL     	string
     AWSXS  		string
@@ -440,7 +438,7 @@ func deployBlueprint(d *schema.ResourceData) error {
 		blueprintName, ok_blueprintName := d.GetOk("blueprint")
 		log.Println("Blueprint name is : ", blueprintName.(string))
 		log.Println("username for blueprint creation is : ", credentials.UserName)
-		log.Println("password for blueprint creation is : ", credentials.Password)
+		//log.Println("password for blueprint creation is : ", credentials.Password)
 		log.Println("Blueprint name is : ", blueprintName.(string))
 		if ok_blueprintName {
 			version, ok_version := d.GetOk("version")
@@ -481,8 +479,8 @@ func deployBlueprint(d *schema.ResourceData) error {
 	// then deploy the blueprint.
 	// this will take some time so call GetTaskStatus for it to check when this is done
 	if ok_environmentId {
+		log.Println("EnvironmentId is : ", environmentId.(string))
 		blueprintId, ok_blueprintId := d.GetOk("BlueprintId")
-		log.Println("BlueprintId is : ", blueprintId.(string))
 		if ok_blueprintId {
 			log.Println("BlueprintId is : ", blueprintId.(string))
 			compType, ok_type:= d.GetOk("type")
@@ -695,7 +693,7 @@ func GetDeploymentPlan(d *schema.ResourceData, blueprintId string, environmentId
 			break
 		}
 		log.Println("username for deploymentPlan determination is : ", credentials.UserName)
-		log.Println("password for deploymentPlan determination is : ", credentials.Password)
+		//log.Println("password for deploymentPlan determination is : ", credentials.Password)
 		statusResponse := api.GetDeploymentPlans(blueprintId , environmentId, credentials.UserName, credentials.Password)
 
 		log.Println("\n GetDeploymentPlans response is:",string(statusResponse))
