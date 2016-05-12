@@ -31,14 +31,17 @@ type Topology struct {
 	Creatr 		Creator `xml:"creator"`
 	Created 	string `xml:"created"`
 	LockType 	string `xml:"lockType"`
+	LastModified 	string `xml:"lastModified"`
 	Prent		Parent `xml:"parent"`
 	Version 	string `xml:"version"`
+	Latest 		bool `xml:"latest"`
 	Pblisher	Publisher `xml:"publisher"`
 	VersionStatus 		string `xml:"versionStatus"`
 	CheckoutAllowed 	string `xml:"checkoutAllowed"`
 	HeadAllowed 		string `xml:"headAllowed"`
 	ParentProject		ParentProject `xml:"parentProject"`
 	AnyOrder	AnyOrder `xml:"anyOrder"`
+	VarList		[]Variables `xml:"variables,omitempty"`
 	AccessUriExpanded 	string `xml:"accessUriExpanded"`
 	SourceBlueprint		SourceBlueprint `xml:"sourceBlueprint"`
 	BlueprintSubcontainer 	string `xml:"blueprintSubcontainer"`
@@ -177,6 +180,31 @@ type Asset struct {
 	Project 			Project		`xml:"project,omitempty"`
 	ReleaseDisks 		string  	`xml:"releaseDisks"`
 	Stats 				StatsTemp		`xml:"stats,omitempty"`
+}
+
+type Variables struct {
+	XMLName struct{}    `xml:"variables"`
+	Id 					string		`xml:"id"`	
+	Name  				string 		`xml:"name"`
+	Encrypted 			bool   		`xml:"encrypted"`
+	Overridable 		bool   		`xml:"overridable"`
+	PropertyType 		PropertyType   	`xml:"PropertyType"`
+	StringValue 		string   	`xml:"stringValue"`
+	Value 				string   	`xml:"value"`
+}
+
+type PropertyType struct {
+	XMLName struct{}    `xml:"propertyType"`
+	Name  		string 		`xml:"name"`		
+	HREF 		string   	`xml:"href"`
+	Id 			string   	`xml:"id"`
+	Rel 		string   	`xml:"rel,omitempty"`
+	Type 		string   	`xml:"type,omitempty"`
+	Position 	string   	`xml:"position,omitempty"`
+	Version 	string   	`xml:"version,omitempty"`
+	Latest 		string   	`xml:"latest,omitempty"`
+	VersionStatus 	string  `xml:"versionStatus,omitempty"`
+	LockType 	string   	`xml:"lockType,omitempty"`
 }
 
 type PolicyAssignment struct {
