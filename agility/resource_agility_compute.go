@@ -188,7 +188,7 @@ type Variables struct {
 	Name  				string 		`xml:"name"`
 	Encrypted 			bool   		`xml:"encrypted"`
 	Overridable 		bool   		`xml:"overridable"`
-	PropertyType 		PropertyType   	`xml:"PropertyType"`
+	PropertyType 		PropertyType   	`xml:"propertyType"`
 	StringValue 		string   	`xml:"stringValue"`
 	Value 				string   	`xml:"value"`
 }
