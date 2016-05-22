@@ -35,7 +35,7 @@ Terraform is built on a plugin-based architecture. All providers and provisioner
 
 #### Install plugin into Terraform
 - Follow the instructions at [PLUGIN BASICS] (https://www.terraform.io/docs/plugins/basics.html) in the "Installing a Plugin" section
-- when developing its best to point to your ~/work/src/github.com/"Github user"/terraform-provider-agility/terraform-provider-agility executable
+- when developing its best to point to your ~/work/src/github.com/csc/csc-agility-terraform-provider-plug-in/terraform-provider-agility executable
 
 
 ### Using the Plugin
