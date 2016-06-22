@@ -85,4 +85,9 @@ The Plugin writes details of its actions to an ```agility.log``` file in the sam
 Use the contents of this file when reporting issues with the plugin, or trying to determine what the plugin is doing.
 
 ### License
-[Apache 2](https://github.com/csc/csc-agility-terraform-provider-plug-in/blob/master/LICENSE)
+The Services SDK and the reference code provided in this repository are licensed under the Apache License, Version 2.0
+See [LICENSE](https://github.com/csc/csc-agility-terraform-provider-plug-in/blob/master/LICENSE) for the full license text.
+
+## Contributing to the Project
+Please follow the standard Git repository process of "Forking" and "Pull Request" [defined here](https://guides.github.com/activities/forking/)
+
