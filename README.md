@@ -85,4 +85,4 @@ The Plugin writes details of its actions to an ```agility.log``` file in the sam
 Use the contents of this file when reporting issues with the plugin, or trying to determine what the plugin is doing.
 
 ### License
-(https://github.com/csc/csc-agility-terraform-provider-plug-in/blob/master/LICENSE)
+[Apache 2](https://github.com/csc/csc-agility-terraform-provider-plug-in/blob/master/LICENSE)
