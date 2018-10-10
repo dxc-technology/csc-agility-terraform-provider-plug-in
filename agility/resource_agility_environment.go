@@ -45,7 +45,7 @@ import (
 
 // 	// Associate to Project if specified, which it should be
 // 	// if the .tf file is configured correctly
-// 	projectId, ok_projectId := d.GetOk("ProjectId")
+// 	projectId, ok_projectId := d.GetOk("project_id")
 // 	log.Println("the Project Id is: ", projectId)
 
 // 	if ok_projectId {
@@ -79,7 +79,7 @@ func checkEnvironment(d *schema.ResourceData) error {
 
 	// Associate to Project if specified, which it should be
 	// if the .tf file is configured correctly
-	projectId, ok_projectId := d.GetOk("ProjectId")
+	projectId, ok_projectId := d.GetOk("project_id")
 	log.Println("the Project Id is: ", projectId)
 
 	if ok_projectId {
@@ -91,7 +91,7 @@ func checkEnvironment(d *schema.ResourceData) error {
 
 		log.Println("the Environment Id is: ", response)
 		//set the ID as the ID of this resource
-		d.Set("EnvironmentId",string(response))
+		d.Set("environment_id",string(response))
 
 		return nil
 	} else {
@@ -105,7 +105,7 @@ func checkEnvironment(d *schema.ResourceData) error {
 // func resourceAgilityEnvironmentRead(d *schema.ResourceData, meta interface{}) error {
 // 	// Associate to Project if specified, which it should be
 // 	// if the .tf file is configured correctly
-// 	projectId, ok_projectId := d.GetOk("ProjectId")
+// 	projectId, ok_projectId := d.GetOk("project_id")
 
 // 	if ok_projectId {
 // 		//get the ID of the Environment by calling the Agility API
@@ -128,7 +128,7 @@ func checkEnvironment(d *schema.ResourceData) error {
 // func resourceAgilityEnvironmentUpdate(d *schema.ResourceData, meta interface{}) error {
 // 	// Associate to Project if specified, which it should be
 // 	// if the .tf file is configured correctly
-// 	projectId, ok_projectId := d.GetOk("ProjectId")
+// 	projectId, ok_projectId := d.GetOk("project_id")
 
 // 	if ok_projectId {
 // 		//get the ID of the Environment by calling the Agility API

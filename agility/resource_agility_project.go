@@ -65,7 +65,7 @@ func checkProject(ResourceData *schema.ResourceData) error {
 	}
 
 	//set the ID as the ID of this resource
-	ResourceData.Set("ProjectId",string(response))
+	ResourceData.Set("project_id",string(response))
 	log.Println("the ProjectId is: ", string(response))
 
 	return nil

@@ -12,6 +12,7 @@ import (
 
 	"github.com/csc/csc-agility-terraform-provider-plug-in/agility/api"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/davecgh/go-spew/spew"
 )
 
 // topology used to update topology name
@@ -626,27 +627,27 @@ func resourceAgilityCompute() *schema.Resource {
 				Required: 	true,
 				ForceNew:	true,
 			},
-			"EnvironmentId": &schema.Schema{
+			"environment_id": &schema.Schema{
 				Type:     	schema.TypeString,
 				Computed: 	true,
 				ForceNew:	true,
 			},
-			"ProjectId": &schema.Schema{
+			"project_id": &schema.Schema{
 				Type:     	schema.TypeString,
 				Computed: 	true,
 				ForceNew:	true,
 			},
-			"BlueprintId": &schema.Schema{
+			"blueprint_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: 	true,
 				ForceNew:	true,
 			},
-			"TopologyId": &schema.Schema{
+			"topology_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: 	true,
 				ForceNew:	true,
 			},
-			"CreatedStopped": &schema.Schema{
+			"createdstopped": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: 	true,
 				Computed:	true,
@@ -687,19 +688,21 @@ func resourceAgilityComputeCreate(ResourceData *schema.ResourceData, meta interf
 
     errProj := checkProject(ResourceData)
     log.Println("errProj is: ", errProj)
+    resDataStr := spew.Sdump(ResourceData.Get("project_id"))
+    log.Println("ResourceData: ", resDataStr)
     if errProj == nil {
-    	log.Println("ProjectId is: ", ResourceData.Get("ProjectId"))
+    	log.Println("ProjectId is: ", ResourceData.Get("project_id"))
     	errEnv := checkEnvironment(ResourceData)
     	if errEnv == nil {
-    		log.Println("EnvironmentId is: ", ResourceData.Get("EnvironmentId"))
+    		log.Println("EnvironmentId is: ", ResourceData.Get("environment_id"))
 	    	errBP := deployBlueprint(ResourceData)
-	    	log.Println("BlueprintId is: ", ResourceData.Get("BlueprintId"))
+	    	log.Println("BlueprintId is: ", ResourceData.Get("blueprint_id"))
 	    	if errBP == nil {
 	    		//if the active resource variable is set in the .tf file then rename the topology and
 			    // start it. Otherwise just rename the tolpology. If this topology is created but not started also 
 			    // set the CreatedStopped resource variable for correct update processing
 				if ResourceData.Get("active").(string) == "true" {
-					topologyId := ResourceData.Get("TopologyId").(string)
+					topologyId := ResourceData.Get("topology_id").(string)
 					UpdateTopologyName(ResourceData,topologyId)
 					StartTopology(ResourceData,topologyId)
 					ResourceData.SetId(topologyId)
@@ -708,9 +711,9 @@ func resourceAgilityComputeCreate(ResourceData *schema.ResourceData, meta interf
 						return errUIN
 					}
 				} else {
-					topologyId := ResourceData.Get("TopologyId").(string)
+					topologyId := ResourceData.Get("topology_id").(string)
 					UpdateTopologyName(ResourceData,topologyId)
-					ResourceData.Set("CreatedStopped", true)
+					ResourceData.Set("createdstopped", true)
 					ResourceData.SetId(topologyId)
 				}
 	    	} else {
@@ -752,20 +755,20 @@ func resourceAgilityComputeUpdate(d *schema.ResourceData, meta interface{}) erro
     // Otherwise stop the topology and all its instances
     if d.HasChange("active") {
         if d.Get("active").(string) == "true" {
-			topologyId := d.Get("TopologyId").(string)
+			topologyId := d.Get("topology_id").(string)
 			log.Println("Starting the Topology")
 			StartTopology(d,topologyId)
 			d.SetId(topologyId)
-			createdStopped := d.Get("CreatedStopped")
+			createdStopped := d.Get("createdstopped")
 			if createdStopped.(bool) {
 				errUIN := UpdateInstanceName(d,topologyId)
 				if errUIN != nil {
 					return errUIN
 				}
-				d.Set("CreatedStopped", false)
+				d.Set("createdstopped", false)
 			}
 		} else if d.Get("active").(string) == "false" {
-			topologyId := d.Get("TopologyId").(string)
+			topologyId := d.Get("topology_id").(string)
 			log.Println("Stoping the Topology")
 			StopTopology(d,topologyId)
 			d.SetId(topologyId)
@@ -775,7 +778,7 @@ func resourceAgilityComputeUpdate(d *schema.ResourceData, meta interface{}) erro
     // if the name resource variable has changed then change the topology name
     // and the name of the instance(s)
     if d.HasChange("name") {
-	topologyId := d.Get("TopologyId").(string)
+	topologyId := d.Get("topology_id").(string)
 	UpdateTopologyName(d,topologyId)
 	d.SetId(topologyId)
 	errUIN := UpdateInstanceName(d,topologyId)
@@ -1212,8 +1215,8 @@ func GetTaskStatus(d *schema.ResourceData,id string) error {
 					log.Println("Topology name is :", q.ResultName)
 					log.Println("Topology id is :", q.Id)
 					//the task is finsihed, so save the Topology id
-					d.Set("TopologyId",q.Id)
-					d.Set("TopologyName",q.ResultName)
+					d.Set("topology_id",q.Id)
+					d.Set("topology_name",q.ResultName)
 					d.Set("Status","started")
 					d.SetId(q.Id)
 					finished = true

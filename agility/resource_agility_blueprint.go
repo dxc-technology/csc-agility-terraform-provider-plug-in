@@ -213,8 +213,15 @@ type Config struct {
     BCL    		string
     BCXL    	string
     BCXXL    	string
+    MXS 		string         
+	MS 			string
+	MM 			string
+	ML 			string
+	MXL 		string
+	MXXL		string
     AWSCloud 	string
     BizCloud	string
+    Mock        string
 }
 
 var configuration Config
@@ -250,7 +257,7 @@ func resourceAgilityBlueprintDeploy(d *schema.ResourceData, meta interface{}) er
 	// get the value of the Project ID created by the creation of the Project Resource.
 	// if that is OK as well as the Name, the get the right bluerint ID, depending on whether 
 	// a Version number was supplied of not
-	projectId, ok_projectId := d.GetOk("ProjectId")
+	projectId, ok_projectId := d.GetOk("project_id")
 	log.Println("Project ID is : ", projectId)
 	var blueprintId string
 	if ok_projectId {
@@ -274,7 +281,7 @@ func resourceAgilityBlueprintDeploy(d *schema.ResourceData, meta interface{}) er
 
 			log.Println("BlueprintId is : ", blueprintId)
 			if blueprintId != "" {
-				d.Set("BlueprintId",blueprintId)
+				d.Set("blueprint_id",blueprintId)
 				d.SetId(blueprintId)
 			} else {
 				return fmt.Errorf("The blueprint does not have that version")
@@ -289,13 +296,13 @@ func resourceAgilityBlueprintDeploy(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("No ProjectId was provided")
 	}
 
-	environmentId, ok_environmentId := d.GetOk("EnvironmentId")
+	environmentId, ok_environmentId := d.GetOk("environment_id")
 
 	//if the environment ID was provided then get the right deployment plan for the blueprint ID
 	// then deploy the blueprint.
 	// this will take some time so call GetTaskStatus for it to check when this is done
 	if ok_environmentId {
-		blueprintId, ok_blueprintId := d.GetOk("BlueprintId")
+		blueprintId, ok_blueprintId := d.GetOk("blueprint_id")
 		log.Println("BlueprintId is : ", blueprintId.(string))
 		if ok_blueprintId {
 			log.Println("BlueprintId is : ", blueprintId.(string))
@@ -352,7 +359,7 @@ func resourceAgilityBlueprintDeploy(d *schema.ResourceData, meta interface{}) er
 									log.Println("status value is :", q.Status)
 									if q.Status == "Pending" {
 										GetTaskStatus(d,q.Id)
-										topologyId := d.Get("TopologyId").(string)
+										topologyId := d.Get("topology_id").(string)
 										d.SetId(topologyId)
 										finish = true
 									}
@@ -397,7 +404,7 @@ func resourceAgilityBlueprintDeploy(d *schema.ResourceData, meta interface{}) er
 								log.Println("status value is :", q.Status)
 								if q.Status == "Pending" {
 									GetTaskStatus(d,q.Id)
-									topologyId := d.Get("TopologyId").(string)
+									topologyId := d.Get("topology_id").(string)
 									d.SetId(topologyId)
 									finish = true
 								}
@@ -428,10 +435,12 @@ func deployBlueprint(d *schema.ResourceData) error {
 
     log.SetOutput(f)
 
+   	log.Println("---------------------function deployBlueprint---------------------")
+
 	// get the value of the Project ID created by the creation of the Project Resource.
 	// if that is OK as well as the Name, the get the right bluerint ID, depending on whether 
 	// a Version number was supplied of not
-	projectId, ok_projectId := d.GetOk("ProjectId")
+	projectId, ok_projectId := d.GetOk("project_id")
 	log.Println("Project ID is : ", projectId)
 	var blueprintId string
 	if ok_projectId {
@@ -458,7 +467,7 @@ func deployBlueprint(d *schema.ResourceData) error {
 
 			log.Println("BlueprintId is : ", blueprintId)
 			if blueprintId != "" {
-				d.Set("BlueprintId",blueprintId)
+				d.Set("blueprint_id",blueprintId)
 				//d.SetId(blueprintId)
 			} else {
 				return fmt.Errorf("The blueprint does not have that version")
@@ -473,14 +482,14 @@ func deployBlueprint(d *schema.ResourceData) error {
 		return fmt.Errorf("No ProjectId was provided")
 	}
 
-	environmentId, ok_environmentId := d.GetOk("EnvironmentId")
+	environmentId, ok_environmentId := d.GetOk("environment_id")
 
 	//if the environment ID was provided then get the right deployment plan for the blueprint ID
 	// then deploy the blueprint.
 	// this will take some time so call GetTaskStatus for it to check when this is done
 	if ok_environmentId {
 		log.Println("EnvironmentId is : ", environmentId.(string))
-		blueprintId, ok_blueprintId := d.GetOk("BlueprintId")
+		blueprintId, ok_blueprintId := d.GetOk("blueprint_id")
 		if ok_blueprintId {
 			log.Println("BlueprintId is : ", blueprintId.(string))
 			compType, ok_type:= d.GetOk("type")
@@ -585,7 +594,7 @@ func deployBlueprint(d *schema.ResourceData) error {
 								log.Println("status value is :", q.Status)
 								if q.Status == "Pending" {
 									GetTaskStatus(d,q.Id)
-									//topologyId := d.Get("TopologyId").(string)
+									//topologyId := d.Get("topology_id").(string)
 									//d.SetId(topologyId)
 									finish = true
 								}
@@ -769,6 +778,27 @@ func GetDeploymentPlan(d *schema.ResourceData, blueprintId string, environmentId
 											size = configuration.BCXL
 										case "XXL":
 											size = configuration.BCXXL
+									}
+									childDepth = i
+									// There is likely to be multiple child/option depths due to afilities, so dig deeper until the right
+									// level is found
+									ParseDeploymentPlan (d, j, &resourceIndex, &childDepth, dp.ChildList[i], size)
+									finished = true
+									break
+								} else if strings.Contains(dp.ChildList[i].OptionList[j].ResourceList[0].Name, configuration.Mock)  {
+									switch d.Get("type") {
+										case "XS":
+											size = configuration.MXS
+										case "S":
+											size = configuration.MS
+										case "M":
+											size = configuration.MM
+										case "L":
+											size = configuration.ML
+										case "XL":	
+											size = configuration.MXL
+										case "XXL":
+											size = configuration.MXXL
 									}
 									childDepth = i
 									// There is likely to be multiple child/option depths due to afilities, so dig deeper until the right
